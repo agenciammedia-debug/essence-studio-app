@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+  <!-- ===== PWA: esto hace que al "Añadir a Inicio" se abra a pantalla completa, sin barra de Safari ===== -->
+  <title>Essence Studio - App</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Essence Studio">
+  <meta name="theme-color" content="#e09ca9">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <!-- ================================================================================================= -->
+
+  <style>
+    /* Estética Apple / iOS */
+    :root {
+      --primary: #e09ca9;
+      --bg: #f2f2f7;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --text-main: #000000;
+      --text-muted: #8e8e93; 
+      --border: #c6c6c8;
+      --btn-light: #e5e5ea; 
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      margin: 0;
+      padding: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text-main);
+    }
+
+    .form-group {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    select, input[type="text"], input[type="search"] {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 17px;
+      color: var(--text-main);
+      padding: 8px 0;
+      outline: none;
+      appearance: none;
+    }
+
+    input[list]::-webkit-calendar-picker-indicator {
+      opacity: 0.5;
+      cursor: pointer;
+    }
+
+    /* --- CUSTOM DROPDOWN PARA CLIENTAS --- */
+    .custom-dropdown-container {
+      position: relative;
+      z-index: 50;
+    }
+    
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .input-wrapper input {
+      padding-right: 35px;
+    }
+    
+    .dropdown-icon {
+      position: absolute;
+      right: 0;
+      padding: 10px 0 10px 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+    }
+    
+    .custom-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-top: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .dropdown-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+      font-size: 16px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:active { background: #e5e5ea; }
+
+    .options-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .option-btn {
+      background: var(--btn-light); 
+      color: var(--text-main);
+      border-radius: 14px; 
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      box-sizing: border-box;
+      line-height: 1.2;
+    }
+
+    .option-btn.square {
+      width: calc(33.333% - 7px);
+      aspect-ratio: 1 / 1; 
+    }
+
+    .option-btn.long {
+      width: 100%;
+      height: 48px;
+    }
+
+    .option-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 10px rgba(224, 156, 169, 0.4);
+      transform: scale(0.97); 
+    }
+
+    .categories-wrapper {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding-bottom: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .categories-wrapper::-webkit-scrollbar { display: none; }
+
+    .category-chip {
+      background: var(--btn-light); 
+      color: var(--text-main);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .category-chip.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .search-box {
+      background: rgba(118, 118, 128, 0.12);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+
+    .services-list {
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .service-item {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+      font-size: 17px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .service-item:last-child { border-bottom: none; }
+    
+    .service-item.selected {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .selected-list {
+      margin-top: 12px;
+      padding-left: 20px;
+      font-size: 15px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .total-divider {
+      border: 0;
+      border-top: 1px solid rgba(60, 60, 67, 0.2);
+      margin: 12px 0;
+    }
+
+    .total-text {
+      text-align: right;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .switch-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 51px;
+      height: 31px;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e5e5ea; 
+      transition: .4s;
+      border-radius: 31px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 27px; width: 27px;
+      left: 2px; bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .btn-submit {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border-radius: 14px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.2s;
+    }
+    .btn-submit:active { opacity: 0.7; }
+    .btn-submit:disabled { background-color: #c6c6c8; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-animation {
+      animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+      background-color: #ff3b30 !important; 
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-card {
+      background: rgba(255, 255, 255, 0.95);
+      width: 320px;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show { opacity: 1; }
+    .modal-overlay.show .modal-card { transform: scale(1); }
+
+    .modal-icon {
+      font-size: 40px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-body {
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .modal-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #loader {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loader">Cargando datos...</div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-icon">✅</div>
+      <div class="modal-title">¡Registro Exitoso!</div>
+      <div class="modal-body" id="modalContent"></div>
+      <button class="modal-btn" onclick="closeModalAndClear()">Cerrar</button>
+    </div>
+  </div>
+
+  <div class="container" style="display: none;" id="app">
+    <h1>Registro Essence</h1>
+    
+    <div class="form-group">
+      <label>Manicurista</label>
+      <select id="manicurista"></select>
+    </div>
+
+    <div class="form-group">
+      <label>Método de Pago</label>
+      <div class="options-grid" id="metodoPagoContainer"></div>
+    </div>
+
+    <div class="form-group custom-dropdown-container">
+      <label>Clienta</label>
+      <div class="input-wrapper">
+        <input type="text" id="clienta" placeholder="Selecciona o escribe el nombre..." autocomplete="off" onfocus="showClientas()" onkeyup="filterClientas()">
+        <span class="dropdown-icon" onclick="toggleClientas()">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </span>
+      </div>
+      <div id="clientas-dropdown" class="custom-dropdown"></div>
+    </div>
+    
+    <div class="form-group">
+      <label>Estado de Clienta</label>
+      <div class="options-grid" id="estadoClientaContainer"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Servicios</label>
+      <div class="categories-wrapper" id="categoriesBox"></div>
+      
+      <div class="search-box">
+        <input type="search" id="searchService" placeholder="Buscar cualquier servicio..." onkeyup="renderServices()">
+      </div>
+      
+      <div class="services-list" id="servicesList"></div>
+      <div id="selectedServicesPreview"></div>
+    </div>
+
+    <div class="form-group switch-container">
+      <label style="margin-bottom: 0;">Comisión Extra Semanal</label>
+      <label class="switch">
+        <input type="checkbox" id="comisionExtra">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">Registrar Servicio</button>
+  </div>
+
+  <script>
+    // ================================================================
+    // ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT DESPLEGADO COMO WEB APP
+    // Debe terminar en /exec  (NO en /dev)
+    // ================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycrbhwiSYrj-pfygpnsQ-y8cbt2BK5DyeZc1gYp5DCjJjeSGGh1Lqcn2UooYuOEfXM/exec";
+
+    let allServices = {};
+    let clientasDataMaster = [];
+    let activeCategory = 'Todos';
+    let selectedServices = new Set();
+    
+    let selectedMetodoPago = '';
+    let selectedEstadoClienta = '';
+    let totalSumaGlobal = 0;
+
+    // === ANTES: google.script.run.withSuccessHandler(initApp).getFormData(); ===
+    fetch(SCRIPT_URL + '?action=getFormData')
+      .then(res => res.json())
+      .then(initApp)
+      .catch(err => {
+        document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
+        console.error(err);
+      });
+
+    function populateSelect(id, options) {
+      const select = document.getElementById(id);
+      select.innerHTML = '<option value="" disabled selected>Seleccionar...</option>';
+      options.forEach(opt => {
+        select.innerHTML += `<option value="${opt}">${opt}</option>`;
+      });
+    }
+
+    function populateClientasCustom(options) {
+      clientasDataMaster = options;
+      renderClientas(options);
+    }
+
+    function renderClientas(options) {
+      const dropdown = document.getElementById('clientas-dropdown');
+      dropdown.innerHTML = '';
+      if(options.length === 0) {
+        dropdown.innerHTML = `<div class="dropdown-item" style="color:var(--text-muted);">Nueva clienta...</div>`;
+        return;
+      }
+      options.forEach(opt => {
+        dropdown.innerHTML += `<div class="dropdown-item" onclick="selectClienta('${opt}')">${opt}</div>`;
+      });
+    }
+
+    function showClientas() {
+      document.getElementById('clientas-dropdown').style.display = 'block';
+    }
+
+    function toggleClientas() {
+      const dd = document.getElementById('clientas-dropdown');
+      dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function filterClientas() {
+      const val = document.getElementById('clienta').value.toLowerCase();
+      const filtered = clientasDataMaster.filter(c => c.toLowerCase().includes(val));
+      renderClientas(filtered);
+      showClientas();
+    }
+
+    function selectClienta(nombre) {
+      document.getElementById('clienta').value = nombre;
+      document.getElementById('clientas-dropdown').style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.custom-dropdown-container')) {
+        const dd = document.getElementById('clientas-dropdown');
+        if(dd) dd.style.display = 'none';
+      }
+    });
+
+    function renderButtonGrid(containerId, options, type) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      
+      options.forEach(opt => {
+        let displayLabel = opt;
+        
+        if (type === 'estado' && opt.trim().toLowerCase() === 'recomendada') {
+          displayLabel = 'Referida';
+        }
+
+        const txt = displayLabel.toLowerCase();
+        const isLong = txt.includes('canje') || txt.length > 12;
+        const shapeClass = isLong ? 'long' : 'square';
+        
+        container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${opt}')">${displayLabel}</div>`;
+      });
+    }
+
+    function selectOptionBtn(element, type, value) {
+      const container = element.parentElement;
+      
+      container.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      
+      if(type === 'pago') selectedMetodoPago = value;
+      if(type === 'estado') selectedEstadoClienta = value;
+    }
+
+    function renderCategories(categories) {
+      const box = document.getElementById('categoriesBox');
+      box.innerHTML = `<div class="category-chip active" onclick="setCategory('Todos', this)">Todos</div>`;
+      categories.forEach(cat => {
+        box.innerHTML += `<div class="category-chip" onclick="setCategory('${cat}', this)">${cat}</div>`;
+      });
+    }
+
+    function setCategory(cat, element) {
+      activeCategory = cat;
+      document.querySelectorAll('.category-chip').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
+      document.getElementById('searchService').value = '';
+      renderServices();
+    }
+
+    function renderServices() {
+      const list = document.getElementById('servicesList');
+      const searchTerm = document.getElementById('searchService').value.toLowerCase();
+      list.innerHTML = '';
+
+      let servicesToShow = [];
+      
+      if (searchTerm) {
+        Object.values(allServices).forEach(arr => servicesToShow.push(...arr));
+        servicesToShow = servicesToShow.filter(s => s.toLowerCase().includes(searchTerm));
+      } else {
+        if (activeCategory === 'Todos') {
+          Object.values(allServices).forEach(arr => servicesToShow.push(...arr));
+        } else {
+          servicesToShow = allServices[activeCategory] || [];
+        }
+      }
+
+      servicesToShow = [...new Set(servicesToShow)];
+
+      servicesToShow.forEach(service => {
+        const isSelected = selectedServices.has(service) ? 'selected' : '';
+        const checkIcon = isSelected ? '✓' : '';
+        
+        list.innerHTML += `
+          <div class="service-item ${isSelected}" onclick="toggleService('${service}')">
+            <span>${service}</span>
+            <span>${checkIcon}</span>
+          </div>
+        `;
+      });
+    }
+
+    function toggleService(service) {
+      if (selectedServices.has(service)) {
+        selectedServices.delete(service);
+      } else {
+        selectedServices.add(service);
+      }
+      updateSelectedPreview();
+      renderServices();
+    }
+
+    function updateSelectedPreview() {
+      const preview = document.getElementById('selectedServicesPreview');
+      totalSumaGlobal = 0;
+
+      if (selectedServices.size > 0) {
+        let html = '<ul class="selected-list">';
+        
+        selectedServices.forEach(s => {
+          html += `<li>${s}</li>`;
+          const regex = /-\s*(\d+(?:\.\d+)?)\s*soles/i;
+          const match = s.match(regex);
+          if (match && match[1]) {
+            totalSumaGlobal += parseFloat(match[1]);
+          }
+        });
+        
+        html += '</ul>';
+        html += '<hr class="total-divider">';
+        html += `<div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>`;
+        
+        preview.innerHTML = html;
+      } else {
+        preview.innerHTML = '';
+      }
+    }
+
+    function submitForm() {
+      const btn = document.getElementById('submitBtn');
+      const manicurista = document.getElementById('manicurista').value;
+      const clienta = document.getElementById('clienta').value;
+      
+      if(!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
+        btn.innerText = "Faltan datos por llenar";
+        btn.classList.add('shake-animation');
+        
+        setTimeout(() => {
+          btn.classList.remove('shake-animation');
+          btn.innerText = "Registrar Servicio";
+        }, 500); 
+        return;
+      }
+
+      localStorage.setItem('miNombreManicurista', manicurista);
+
+      btn.disabled = true;
+      btn.innerText = "Registrando...";
+
+      const formData = {
+        manicurista: manicurista,
+        metodoPago: selectedMetodoPago,
+        clienta: clienta,
+        servicios: Array.from(selectedServices).join(' + '), 
+        estadoClienta: selectedEstadoClienta,
+        comisionExtra: document.getElementById('comisionExtra').checked
+      };
+
+      // === ANTES: google.script.run.withSuccessHandler(...).withFailureHandler(...).submitData(formData); ===
+      // "text/plain" evita que el navegador dispare un preflight OPTIONS
+      // (Apps Script Web App no lo maneja y fallaría el guardado).
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(formData)
+      })
+        .then(res => res.json())
+        .then(res => {
+          if (res.status === 'error') throw new Error(res.message);
+          showSuccessModal(formData);
+          btn.disabled = false;
+          btn.innerText = "Registrar Servicio";
+        })
+        .catch(err => {
+          alert('Error: ' + err.message);
+          btn.disabled = false;
+          btn.innerText = "Registrar Servicio";
+        });
+    }
+
+    function showSuccessModal(data) {
+      const modal = document.getElementById('modalOverlay');
+      const content = document.getElementById('modalContent');
+      
+      const serviciosHtml = Array.from(selectedServices).map(s => `• ${s}`).join('<br>');
+      const upsellingText = data.comisionExtra ? 'Sí (UP SELLING 🤑💕)' : 'No';
+
+      const displayEstado = (data.estadoClienta.trim().toLowerCase() === 'recomendada') ? 'Referida' : data.estadoClienta;
+
+      content.innerHTML = `
+        <strong>Clienta:</strong> ${data.clienta}<br>
+        <strong>Atendida por:</strong> ${data.manicurista}<br>
+        <strong>Pago:</strong> ${data.metodoPago}<br>
+        <strong>Estado:</strong> ${displayEstado}<br>
+        <strong>Comisión:</strong> ${upsellingText}<br><br>
+        <strong>Servicios:</strong><br>
+        <span style="color: var(--primary);">${serviciosHtml}</span>
+        <hr class="total-divider">
+        <div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>
+      `;
+
+      modal.style.display = 'flex';
+      setTimeout(() => modal.classList.add('show'), 10);
+    }
+
+    function closeModalAndClear() {
+      const modal = document.getElementById('modalOverlay');
+      modal.classList.remove('show');
+      
+      setTimeout(() => {
+        modal.style.display = 'none';
+        
+        document.getElementById('clienta').value = '';
+        document.getElementById('comisionExtra').checked = false;
+        document.getElementById('searchService').value = '';
+        
+        selectedMetodoPago = ''; 
+        selectedEstadoClienta = '';
+        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+        
+        selectedServices.clear();
+        updateSelectedPreview();
+        renderServices();
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+      }, 300);
+    }
+
+    function initApp(data) {
+      populateSelect('manicurista', data.manicuristas);
+      populateClientasCustom(data.clientas);
+      
+      renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
+      renderButtonGrid('estadoClientaContainer', data.estadosClienta, 'estado');
+      
+      allServices = data.servicios;
+      renderCategories(data.categorias);
+      renderServices();
+
+      const nombreGuardado = localStorage.getItem('miNombreManicurista');
+      if (nombreGuardado) {
+        document.getElementById('manicurista').value = nombreGuardado;
+      }
+
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }
+
+    // ================================================================
+    // PWA: registra el service worker para que el "cascarón" (HTML/CSS)
+    // abra instantáneo, incluso con mala señal, la próxima vez.
+    // ================================================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
