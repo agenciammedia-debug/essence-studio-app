@@ -653,56 +653,65 @@
     }
 
     function submitForm() {
-      const btn = document.getElementById('submitBtn');
-      const manicurista = document.getElementById('manicurista').value;
-      const clienta = document.getElementById('clienta').value;
-      
-      if(!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
-        btn.innerText = "Faltan datos por llenar";
-        btn.classList.add('shake-animation');
-        
-        setTimeout(() => {
-          btn.classList.remove('shake-animation');
-          btn.innerText = "Registrar Servicio";
-        }, 500); 
-        return;
+  const btn = document.getElementById('submitBtn');
+  const manicurista = document.getElementById('manicurista').value;
+  const clienta = document.getElementById('clienta').value;
+
+  if(!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
+    btn.innerText = "Faltan datos por llenar";
+    btn.classList.add('shake-animation');
+
+    setTimeout(() => {
+      btn.classList.remove('shake-animation');
+      btn.innerText = "Registrar Servicio";
+    }, 500); 
+    return;
+  }
+
+  localStorage.setItem('miNombreManicurista', manicurista);
+
+  btn.disabled = true;
+  btn.innerText = "Registrando...";
+
+  const formData = {
+    manicurista: manicurista,
+    metodoPago: selectedMetodoPago,
+    clienta: clienta,
+    servicios: Array.from(selectedServices).join(', '), 
+    estadoClienta: selectedEstadoClienta,
+    comisionExtra: document.getElementById('comisionExtra').checked
+  };
+
+  // CONTROL DE TIMEOUT: Si tarda más de 15 segundos, aborta y avisa
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(formData),
+    signal: controller.signal
+  })
+    .then(res => res.json())
+    .then(res => {
+      clearTimeout(timeoutId);
+      if (res.status === 'error') throw new Error(res.message);
+      showSuccessModal(formData);
+    })
+    .catch(err => {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        alert('La conexión tardó demasiado. Revisa tu señal e intenta nuevamente.');
+      } else {
+        alert('Error al registrar: ' + err.message);
       }
-
-      localStorage.setItem('miNombreManicurista', manicurista);
-
-      btn.disabled = true;
-      btn.innerText = "Registrando...";
-
-      const formData = {
-        manicurista: manicurista,
-        metodoPago: selectedMetodoPago,
-        clienta: clienta,
-        servicios: Array.from(selectedServices).join(', '), 
-        estadoClienta: selectedEstadoClienta,
-        comisionExtra: document.getElementById('comisionExtra').checked
-      };
-
-      // === ANTES: google.script.run.withSuccessHandler(...).withFailureHandler(...).submitData(formData); ===
-      // "text/plain" evita que el navegador dispare un preflight OPTIONS
-      // (Apps Script Web App no lo maneja y fallaría el guardado).
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(formData)
-      })
-        .then(res => res.json())
-        .then(res => {
-          if (res.status === 'error') throw new Error(res.message);
-          showSuccessModal(formData);
-          btn.disabled = false;
-          btn.innerText = "Registrar Servicio";
-        })
-        .catch(err => {
-          alert('Error: ' + err.message);
-          btn.disabled = false;
-          btn.innerText = "Registrar Servicio";
-        });
-    }
+    })
+    .finally(() => {
+      // Garantiza que el botón SIEMPRE se vuelva a activar
+      btn.disabled = false;
+      btn.innerText = "Registrar Servicio";
+    });
+}
 
     function showSuccessModal(data) {
       const modal = document.getElementById('modalOverlay');
