@@ -477,12 +477,43 @@
     let totalSumaGlobal = 0;
 
     // === ANTES: google.script.run.withSuccessHandler(initApp).getFormData(); ===
+    // ================================================================
+    // CARGA ULTRARRÁPIDA: Estrategia Caché + Actualización en Segundo Plano
+    // ================================================================
+    
+    // 1. Intentamos cargar los datos guardados en el teléfono inmediatamente
+    const datosGuardados = localStorage.getItem('essenceDataCache');
+    if (datosGuardados) {
+      try {
+        const datosParseados = JSON.parse(datosGuardados);
+        initApp(datosParseados); // Carga la interfaz en milisegundos
+      } catch(e) {
+        console.error("Error leyendo caché local:", e);
+      }
+    }
+
+    // 2. Pedimos los datos frescos a Google de todos modos (en segundo plano)
     fetch(SCRIPT_URL + '?action=getFormData')
       .then(res => res.json())
-      .then(initApp)
+      .then(data => {
+        // Guardamos los datos nuevos para la próxima vez que se abra la app
+        localStorage.setItem('essenceDataCache', JSON.stringify(data));
+        
+        // Si no había caché (es la primera vez que abre la app), inicializamos ahora
+        if (!datosGuardados) {
+          initApp(data);
+        } else {
+          // Si ya cargó la pantalla, solo actualizamos las variables maestras 
+          // en silencio, por si agregaste una nueva clienta hace 5 minutos.
+          clientasDataMaster = data.clientas;
+          allServices = data.servicios;
+        }
+      })
       .catch(err => {
-        document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
-        console.error(err);
+        if (!datosGuardados) {
+          document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
+        }
+        console.error("Error al actualizar datos en segundo plano:", err);
       });
 
     function populateSelect(id, options) {
