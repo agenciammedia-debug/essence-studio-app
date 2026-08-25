@@ -1,5 +1,6 @@
-const CACHE_NAME = 'essence-studio-v2';
+const CACHE_NAME = 'essence-studio-v3';
 const ARCHIVOS_CASCARON = [
+  './',
   './index.html',
   './manifest.json',
   './icon-192.png',
@@ -13,8 +14,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Borra cachés de versiones anteriores para que las actualizaciones
-// se apliquen solas la próxima vez que se abra la app con internet.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(nombres =>
@@ -27,23 +26,23 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estrategia: "network-first" para el diseño (HTML/CSS/iconos).
-// Siempre intenta traer la versión más nueva de GitHub primero;
-// si no hay internet, usa la última copia guardada (offline).
-// Las llamadas a Apps Script (datos reales) nunca se cachean.
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
+  const method = event.request.method;
 
-  if (url.includes('script.google.com')) {
-    event.respondWith(fetch(event.request));
-    return;
+  // REGLA CLAVE: Ignorar peticiones que NO sean GET (como el POST de registro)
+  // y cualquier comunicación con servidores de Google.
+  if (method !== 'GET' || url.includes('google.com') || url.includes('googleusercontent.com')) {
+    return; // Permite que el navegador maneje la petición directamente por red
   }
 
   event.respondWith(
     fetch(event.request)
       .then(respuesta => {
-        const clone = respuesta.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        if (respuesta.status === 200) {
+          const clone = respuesta.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
         return respuesta;
       })
       .catch(() => caches.match(event.request))
