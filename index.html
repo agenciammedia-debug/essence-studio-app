@@ -809,9 +809,12 @@
         document.getElementById('manicurista').value = nombreGuardado;
       }
 
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-    }
+           fechaUltimaCarga = fechaLocalHoy();
+     ultimoRefresco = Date.now();
+
+     document.getElementById('loader').style.display = 'none';
+     document.getElementById('app').style.display = 'block';
+   }
 
     // ================================================================
     // PWA: registra el service worker para que el "cascarón" (HTML/CSS)
@@ -822,6 +825,55 @@
         navigator.serviceWorker.register('sw.js').catch(console.error);
       });
     }
+
+   // ====== REFRESCO AL VOLVER A LA APP ======
+   let fechaUltimaCarga = null;
+   let ultimoRefresco = 0;
+
+   function fechaLocalHoy() {
+     const d = new Date();
+     return d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+   }
+
+   function refrescarClientas() {
+     // Evita disparos repetidos seguidos
+     if (Date.now() - ultimoRefresco < 15000) return;
+     ultimoRefresco = Date.now();
+
+     google.script.run
+       .withSuccessHandler(function (data) {
+         const hoy = fechaLocalHoy();
+         const cambioElDia = (fechaUltimaCarga && fechaUltimaCarga !== hoy);
+         const textoActual = document.getElementById('clienta').value;
+
+         populateClientasCustom(data.clientas);
+
+         if (cambioElDia) {
+           // Es otro día: limpiamos la clienta que quedó de ayer
+           document.getElementById('clienta').value = '';
+         } else {
+           document.getElementById('clienta').value = textoActual;
+         }
+         fechaUltimaCarga = hoy;
+       })
+       .withFailureHandler(function (err) {
+         console.log('No se pudo refrescar la lista: ' + err.message);
+       })
+       .getFormData();
+   }
+
+   document.addEventListener('visibilitychange', function () {
+     if (document.visibilityState === 'visible') refrescarClientas();
+   });
+
+   window.addEventListener('pageshow', function (e) {
+     if (e.persisted) refrescarClientas();
+   });
+
+   window.addEventListener('focus', refrescarClientas);
+    
   </script>
 </body>
 </html>
