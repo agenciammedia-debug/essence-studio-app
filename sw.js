@@ -9,7 +9,7 @@
 // Si no lo cambias, el iPhone sigue usando la versión vieja.
 // ============================================================
 
-const CACHE = 'essence-v3';
+const CACHE = 'essence-v4';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {
