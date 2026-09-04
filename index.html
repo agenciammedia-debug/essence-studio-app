@@ -462,8 +462,7 @@
 
   <script>
     // ================================================================
-    // ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT DESPLEGADO COMO WEB APP
-    // Debe terminar en /exec  (NO en /dev)
+    // URL DE TU APPS SCRIPT DESPLEGADO COMO WEB APP (termina en /exec)
     // ================================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycrbhwiSYrj-pfygpnsQ-y8cbt2BK5DyeZc1gYp5DCjJjeSGGh1Lqcn2UooYuOEfXM/exec";
 
@@ -471,50 +470,112 @@
     let clientasDataMaster = [];
     let activeCategory = 'Todos';
     let selectedServices = new Set();
-    
+
     let selectedMetodoPago = '';
     let selectedEstadoClienta = '';
     let totalSumaGlobal = 0;
 
-    // === ANTES: google.script.run.withSuccessHandler(initApp).getFormData(); ===
-    // ================================================================
-    // CARGA ULTRARRÁPIDA: Estrategia Caché + Actualización en Segundo Plano
-    // ================================================================
-    
-    // 1. Intentamos cargar los datos guardados en el teléfono inmediatamente
-    const datosGuardados = localStorage.getItem('essenceDataCache');
-    if (datosGuardados) {
-      try {
-        const datosParseados = JSON.parse(datosGuardados);
-        initApp(datosParseados); // Carga la interfaz en milisegundos
-      } catch(e) {
-        console.error("Error leyendo caché local:", e);
-      }
+    // Control de frescura de los datos
+    let fechaUltimaCarga = null;
+    let ultimoRefresco = 0;
+    let appIniciada = false;
+
+    function fechaLocalHoy() {
+      const d = new Date();
+      return d.getFullYear() + '-' +
+             String(d.getMonth() + 1).padStart(2, '0') + '-' +
+             String(d.getDate()).padStart(2, '0');
     }
 
-    // 2. Pedimos los datos frescos a Google de todos modos (en segundo plano)
-    fetch(SCRIPT_URL + '?action=getFormData')
-      .then(res => res.json())
-      .then(data => {
-        // Guardamos los datos nuevos para la próxima vez que se abra la app
-        localStorage.setItem('essenceDataCache', JSON.stringify(data));
-        
-        // Si no había caché (es la primera vez que abre la app), inicializamos ahora
-        if (!datosGuardados) {
-          initApp(data);
-        } else {
-          // Si ya cargó la pantalla, solo actualizamos las variables maestras 
-          // en silencio, por si agregaste una nueva clienta hace 5 minutos.
-          clientasDataMaster = data.clientas;
+    // El "&t=" con la hora actual obliga a iOS a pedir datos nuevos
+    // en vez de devolver la respuesta que guardó ayer.
+    function pedirDatos() {
+      const url = SCRIPT_URL + '?action=getFormData&t=' + Date.now();
+      return fetch(url, { cache: 'no-store' }).then(r => r.json());
+    }
+
+    function cargarDatosFrescos() {
+      ultimoRefresco = Date.now();
+
+      pedirDatos()
+        .then(data => {
+          localStorage.setItem('essenceDataCache', JSON.stringify(data));
+          localStorage.setItem('essenceDataCacheFecha', fechaLocalHoy());
+
+          if (!appIniciada) {
+            initApp(data);
+            return;
+          }
+
+          const hoy = fechaLocalHoy();
+          const cambioElDia = (fechaUltimaCarga && fechaUltimaCarga !== hoy);
+          const textoActual = document.getElementById('clienta').value;
+
           allServices = data.servicios;
+          populateClientasCustom(data.clientas); // vuelve a dibujar el menú
+
+          document.getElementById('clienta').value = cambioElDia ? '' : textoActual;
+          fechaUltimaCarga = hoy;
+        })
+        .catch(err => {
+          if (!appIniciada) {
+            document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
+          }
+          console.error('Error al actualizar datos:', err);
+        });
+    }
+
+    // ARRANQUE: solo usa el caché guardado si es del MISMO día
+    (function arrancar() {
+      const cacheRaw = localStorage.getItem('essenceDataCache');
+      const cacheFecha = localStorage.getItem('essenceDataCacheFecha');
+
+      if (cacheRaw && cacheFecha === fechaLocalHoy()) {
+        try {
+          initApp(JSON.parse(cacheRaw));
+        } catch (e) {
+          console.error('Error leyendo caché local:', e);
         }
-      })
-      .catch(err => {
-        if (!datosGuardados) {
-          document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
-        }
-        console.error("Error al actualizar datos en segundo plano:", err);
-      });
+      }
+      cargarDatosFrescos();
+    })();
+
+    // Cada vez que vuelves a la app desde el fondo, pide la lista de hoy
+    function refrescarDatos() {
+      if (Date.now() - ultimoRefresco < 15000) return;
+      cargarDatosFrescos();
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') refrescarDatos();
+    });
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) refrescarDatos();
+    });
+    window.addEventListener('focus', refrescarDatos);
+
+    function initApp(data) {
+      populateSelect('manicurista', data.manicuristas);
+      populateClientasCustom(data.clientas);
+
+      renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
+      renderButtonGrid('estadoClientaContainer', data.estadosClienta, 'estado');
+
+      allServices = data.servicios;
+      renderCategories(data.categorias);
+      renderServices();
+
+      const nombreGuardado = localStorage.getItem('miNombreManicurista');
+      if (nombreGuardado) {
+        document.getElementById('manicurista').value = nombreGuardado;
+      }
+
+      fechaUltimaCarga = fechaLocalHoy();
+      appIniciada = true;
+
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+    }
 
     function populateSelect(id, options) {
       const select = document.getElementById(id);
@@ -525,14 +586,14 @@
     }
 
     function populateClientasCustom(options) {
-      clientasDataMaster = options;
-      renderClientas(options);
+      clientasDataMaster = options || [];
+      renderClientas(clientasDataMaster);
     }
 
     function renderClientas(options) {
       const dropdown = document.getElementById('clientas-dropdown');
       dropdown.innerHTML = '';
-      if(options.length === 0) {
+      if (options.length === 0) {
         dropdown.innerHTML = `<div class="dropdown-item" style="color:var(--text-muted);">Nueva clienta...</div>`;
         return;
       }
@@ -562,20 +623,20 @@
       document.getElementById('clientas-dropdown').style.display = 'none';
     }
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       if (!e.target.closest('.custom-dropdown-container')) {
         const dd = document.getElementById('clientas-dropdown');
-        if(dd) dd.style.display = 'none';
+        if (dd) dd.style.display = 'none';
       }
     });
 
     function renderButtonGrid(containerId, options, type) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-      
+
       options.forEach(opt => {
         let displayLabel = opt;
-        
+
         if (type === 'estado' && opt.trim().toLowerCase() === 'recomendada') {
           displayLabel = 'Referida';
         }
@@ -583,19 +644,19 @@
         const txt = displayLabel.toLowerCase();
         const isLong = txt.includes('canje') || txt.length > 12;
         const shapeClass = isLong ? 'long' : 'square';
-        
+
         container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${opt}')">${displayLabel}</div>`;
       });
     }
 
     function selectOptionBtn(element, type, value) {
       const container = element.parentElement;
-      
+
       container.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
       element.classList.add('active');
-      
-      if(type === 'pago') selectedMetodoPago = value;
-      if(type === 'estado') selectedEstadoClienta = value;
+
+      if (type === 'pago') selectedMetodoPago = value;
+      if (type === 'estado') selectedEstadoClienta = value;
     }
 
     function renderCategories(categories) {
@@ -620,7 +681,7 @@
       list.innerHTML = '';
 
       let servicesToShow = [];
-      
+
       if (searchTerm) {
         Object.values(allServices).forEach(arr => servicesToShow.push(...arr));
         servicesToShow = servicesToShow.filter(s => s.toLowerCase().includes(searchTerm));
@@ -637,7 +698,7 @@
       servicesToShow.forEach(service => {
         const isSelected = selectedServices.has(service) ? 'selected' : '';
         const checkIcon = isSelected ? '✓' : '';
-        
+
         list.innerHTML += `
           <div class="service-item ${isSelected}" onclick="toggleService('${service}')">
             <span>${service}</span>
@@ -663,7 +724,7 @@
 
       if (selectedServices.size > 0) {
         let html = '<ul class="selected-list">';
-        
+
         selectedServices.forEach(s => {
           html += `<li>${s}</li>`;
           const regex = /-\s*(\d+(?:\.\d+)?)\s*soles/i;
@@ -672,11 +733,11 @@
             totalSumaGlobal += parseFloat(match[1]);
           }
         });
-        
+
         html += '</ul>';
         html += '<hr class="total-divider">';
         html += `<div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>`;
-        
+
         preview.innerHTML = html;
       } else {
         preview.innerHTML = '';
@@ -684,70 +745,69 @@
     }
 
     function submitForm() {
-  const btn = document.getElementById('submitBtn');
-  const manicurista = document.getElementById('manicurista').value;
-  const clienta = document.getElementById('clienta').value;
+      const btn = document.getElementById('submitBtn');
+      const manicurista = document.getElementById('manicurista').value;
+      const clienta = document.getElementById('clienta').value;
 
-  if(!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
-    btn.innerText = "Faltan datos por llenar";
-    btn.classList.add('shake-animation');
+      if (!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
+        btn.innerText = "Faltan datos por llenar";
+        btn.classList.add('shake-animation');
 
-    setTimeout(() => {
-      btn.classList.remove('shake-animation');
-      btn.innerText = "Registrar Servicio";
-    }, 500); 
-    return;
-  }
-
-  localStorage.setItem('miNombreManicurista', manicurista);
-
-  btn.disabled = true;
-  btn.innerText = "Registrando...";
-
-  const formData = {
-    manicurista: manicurista,
-    metodoPago: selectedMetodoPago,
-    clienta: clienta,
-    servicios: Array.from(selectedServices).join(', '), 
-    estadoClienta: selectedEstadoClienta,
-    comisionExtra: document.getElementById('comisionExtra').checked
-  };
-
-  // CONTROL DE TIMEOUT: Si tarda más de 15 segundos, aborta y avisa
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(formData),
-    signal: controller.signal
-  })
-    .then(res => res.json())
-    .then(res => {
-      clearTimeout(timeoutId);
-      if (res.status === 'error') throw new Error(res.message);
-      showSuccessModal(formData);
-    })
-    .catch(err => {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        alert('La conexión tardó demasiado. Revisa tu señal e intenta nuevamente.');
-      } else {
-        alert('Error al registrar: ' + err.message);
+        setTimeout(() => {
+          btn.classList.remove('shake-animation');
+          btn.innerText = "Registrar Servicio";
+        }, 500);
+        return;
       }
-    })
-    .finally(() => {
-      // Garantiza que el botón SIEMPRE se vuelva a activar
-      btn.disabled = false;
-      btn.innerText = "Registrar Servicio";
-    });
-}
+
+      localStorage.setItem('miNombreManicurista', manicurista);
+
+      btn.disabled = true;
+      btn.innerText = "Registrando...";
+
+      const formData = {
+        manicurista: manicurista,
+        metodoPago: selectedMetodoPago,
+        clienta: clienta,
+        servicios: Array.from(selectedServices).join(', '),
+        estadoClienta: selectedEstadoClienta,
+        comisionExtra: document.getElementById('comisionExtra').checked
+      };
+
+      // CONTROL DE TIMEOUT: Si tarda más de 15 segundos, aborta y avisa
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(formData),
+        signal: controller.signal
+      })
+        .then(res => res.json())
+        .then(res => {
+          clearTimeout(timeoutId);
+          if (res.status === 'error') throw new Error(res.message);
+          showSuccessModal(formData);
+        })
+        .catch(err => {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+            alert('La conexión tardó demasiado. Revisa tu señal e intenta nuevamente.');
+          } else {
+            alert('Error al registrar: ' + err.message);
+          }
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.innerText = "Registrar Servicio";
+        });
+    }
 
     function showSuccessModal(data) {
       const modal = document.getElementById('modalOverlay');
       const content = document.getElementById('modalContent');
-      
+
       const serviciosHtml = Array.from(selectedServices).map(s => `• ${s}`).join('<br>');
       const upsellingText = data.comisionExtra ? 'Sí (UP SELLING 🤑💕)' : 'No';
 
@@ -772,49 +832,26 @@
     function closeModalAndClear() {
       const modal = document.getElementById('modalOverlay');
       modal.classList.remove('show');
-      
+
       setTimeout(() => {
         modal.style.display = 'none';
-        
+
         document.getElementById('clienta').value = '';
         document.getElementById('comisionExtra').checked = false;
         document.getElementById('searchService').value = '';
-        
-        selectedMetodoPago = ''; 
+
+        selectedMetodoPago = '';
         selectedEstadoClienta = '';
         document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
-        
+
         selectedServices.clear();
         updateSelectedPreview();
         renderServices();
-        
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
       }, 300);
     }
-
-    function initApp(data) {
-      populateSelect('manicurista', data.manicuristas);
-      populateClientasCustom(data.clientas);
-      
-      renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
-      renderButtonGrid('estadoClientaContainer', data.estadosClienta, 'estado');
-      
-      allServices = data.servicios;
-      renderCategories(data.categorias);
-      renderServices();
-
-      const nombreGuardado = localStorage.getItem('miNombreManicurista');
-      if (nombreGuardado) {
-        document.getElementById('manicurista').value = nombreGuardado;
-      }
-
-           fechaUltimaCarga = fechaLocalHoy();
-     ultimoRefresco = Date.now();
-
-     document.getElementById('loader').style.display = 'none';
-     document.getElementById('app').style.display = 'block';
-   }
 
     // ================================================================
     // PWA: registra el service worker para que el "cascarón" (HTML/CSS)
@@ -825,55 +862,6 @@
         navigator.serviceWorker.register('sw.js').catch(console.error);
       });
     }
-
-   // ====== REFRESCO AL VOLVER A LA APP ======
-   let fechaUltimaCarga = null;
-   let ultimoRefresco = 0;
-
-   function fechaLocalHoy() {
-     const d = new Date();
-     return d.getFullYear() + '-' +
-            String(d.getMonth() + 1).padStart(2, '0') + '-' +
-            String(d.getDate()).padStart(2, '0');
-   }
-
-   function refrescarClientas() {
-     // Evita disparos repetidos seguidos
-     if (Date.now() - ultimoRefresco < 15000) return;
-     ultimoRefresco = Date.now();
-
-     google.script.run
-       .withSuccessHandler(function (data) {
-         const hoy = fechaLocalHoy();
-         const cambioElDia = (fechaUltimaCarga && fechaUltimaCarga !== hoy);
-         const textoActual = document.getElementById('clienta').value;
-
-         populateClientasCustom(data.clientas);
-
-         if (cambioElDia) {
-           // Es otro día: limpiamos la clienta que quedó de ayer
-           document.getElementById('clienta').value = '';
-         } else {
-           document.getElementById('clienta').value = textoActual;
-         }
-         fechaUltimaCarga = hoy;
-       })
-       .withFailureHandler(function (err) {
-         console.log('No se pudo refrescar la lista: ' + err.message);
-       })
-       .getFormData();
-   }
-
-   document.addEventListener('visibilitychange', function () {
-     if (document.visibilityState === 'visible') refrescarClientas();
-   });
-
-   window.addEventListener('pageshow', function (e) {
-     if (e.persisted) refrescarClientas();
-   });
-
-   window.addEventListener('focus', refrescarClientas);
-    
   </script>
 </body>
 </html>
