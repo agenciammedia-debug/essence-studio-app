@@ -26,11 +26,22 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // NUNCA cachear las llamadas a Apps Script
   if (e.request.url.includes('script.google.com')) return;
   if (e.request.method !== 'GET') return;
 
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
+  // El HTML: primero la red, el caché solo como respaldo sin señal
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const copia = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copia));
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
