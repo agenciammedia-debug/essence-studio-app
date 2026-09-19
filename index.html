@@ -575,6 +575,10 @@
 
       document.getElementById('loader').style.display = 'none';
       document.getElementById('app').style.display = 'block';
+
+      // Si quedaron registros sin sincronizar (app cerrada, sin señal, etc.), reintenta ya
+      actualizarBadgePendientes();
+      procesarCola();
     }
 
     function populateSelect(id, options) {
@@ -744,6 +748,51 @@
       }
     }
 
+    // ================================================================
+    // COLA PERSISTENTE: el registro se guarda en localStorage ANTES
+    // de intentar enviarlo. Si falla la red o el servidor está ocupado,
+    // se reintenta solo hasta lograrlo. El dato nunca se pierde,
+    // aunque cierres la app o se caiga el WiFi.
+    // ================================================================
+    let procesandoCola = false;
+
+    function uuid() {
+      if (crypto.randomUUID) return crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
+    function getCola() {
+      try { return JSON.parse(localStorage.getItem('essenceColaEnvios') || '[]'); }
+      catch (e) { return []; }
+    }
+
+    function guardarCola(cola) {
+      localStorage.setItem('essenceColaEnvios', JSON.stringify(cola));
+      actualizarBadgePendientes();
+    }
+
+    function actualizarBadgePendientes() {
+      const n = getCola().length;
+      let badge = document.getElementById('pendingBadge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'pendingBadge';
+        badge.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);' +
+          'background:#000;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;' +
+          'z-index:1500;opacity:0.85;display:none;';
+        document.body.appendChild(badge);
+      }
+      if (n > 0) {
+        badge.innerText = n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
     function submitForm() {
       const btn = document.getElementById('submitBtn');
       const manicurista = document.getElementById('manicurista').value;
@@ -752,7 +801,6 @@
       if (!manicurista || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
         btn.innerText = "Faltan datos por llenar";
         btn.classList.add('shake-animation');
-
         setTimeout(() => {
           btn.classList.remove('shake-animation');
           btn.innerText = "Registrar Servicio";
@@ -762,10 +810,8 @@
 
       localStorage.setItem('miNombreManicurista', manicurista);
 
-      btn.disabled = true;
-      btn.innerText = "Registrando...";
-
       const formData = {
+        idempotencyId: uuid(),
         manicurista: manicurista,
         metodoPago: selectedMetodoPago,
         clienta: clienta,
@@ -774,35 +820,74 @@
         comisionExtra: document.getElementById('comisionExtra').checked
       };
 
-      // CONTROL DE TIMEOUT: Si tarda más de 15 segundos, aborta y avisa
+      // 1) Se guarda YA en la cola local (esto no puede fallar)
+      const cola = getCola();
+      cola.push(formData);
+      guardarCola(cola);
+
+      // 2) Confirmación inmediata a la manicurista (el dato está a salvo)
+      showSuccessModal(formData);
+
+      // 3) Se intenta sincronizar en segundo plano
+      procesarCola();
+    }
+
+    function procesarCola() {
+      if (procesandoCola) return;
+      const cola = getCola();
+      if (cola.length === 0) return;
+
+      procesandoCola = true;
+      const item = cola[0];
+      const intento = item._intentos || 0;
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 22000);
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(item),
         signal: controller.signal
       })
         .then(res => res.json())
         .then(res => {
           clearTimeout(timeoutId);
           if (res.status === 'error') throw new Error(res.message);
-          showSuccessModal(formData);
+
+          // Éxito confirmado por el servidor: se saca de la cola
+          const colaActual = getCola();
+          const idx = colaActual.findIndex(x => x.idempotencyId === item.idempotencyId);
+          if (idx !== -1) colaActual.splice(idx, 1);
+          guardarCola(colaActual);
+
+          procesandoCola = false;
+          if (getCola().length > 0) procesarCola(); // sigue con el próximo
         })
         .catch(err => {
           clearTimeout(timeoutId);
-          if (err.name === 'AbortError') {
-            alert('La conexión tardó demasiado. Revisa tu señal e intenta nuevamente.');
-          } else {
-            alert('Error al registrar: ' + err.message);
-          }
-        })
-        .finally(() => {
-          btn.disabled = false;
-          btn.innerText = "Registrar Servicio";
+          console.error('Reintentando envío:', err.message);
+
+          // Se queda en la cola, sube el contador de intentos, y se reintenta con backoff
+          const colaActual = getCola();
+          const idx = colaActual.findIndex(x => x.idempotencyId === item.idempotencyId);
+          if (idx !== -1) colaActual[idx]._intentos = intento + 1;
+          guardarCola(colaActual);
+
+          procesandoCola = false;
+          const espera = Math.min(2000 * Math.pow(1.5, intento), 15000); // 2s -> ... -> tope 15s
+          setTimeout(procesarCola, espera);
         });
     }
+
+    // Red de seguridad: reintenta la cola al recuperar señal, al volver a la app,
+    // y cada 10s por si algo quedó pendiente.
+    window.addEventListener('online', procesarCola);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') procesarCola();
+    });
+    window.addEventListener('focus', procesarCola);
+    setInterval(procesarCola, 10000);
 
     function showSuccessModal(data) {
       const modal = document.getElementById('modalOverlay');
