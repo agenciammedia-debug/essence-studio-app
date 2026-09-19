@@ -776,7 +776,7 @@
 
       // CONTROL DE TIMEOUT: Si tarda más de 15 segundos, aborta y avisa
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 22000);
 
       fetch(SCRIPT_URL, {
         method: 'POST',
