@@ -9,7 +9,7 @@
 // Si no lo cambias, el iPhone sigue usando la versión vieja.
 // ============================================================
 
-const CACHE = 'essence-v5';
+const CACHE = 'essence-v6';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {
