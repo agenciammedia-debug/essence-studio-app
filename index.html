@@ -169,8 +169,13 @@
       aspect-ratio: 1 / 1; 
     }
 
-    .option-btn.long {
+        .option-btn.long {
       width: 100%;
+      height: 48px;
+    }
+
+    .option-btn.half {
+      width: calc(50% - 5px);
       height: 48px;
     }
 
@@ -418,7 +423,7 @@
 
     <div class="form-group">
       <label>Sede</label>
-      <select id="sede"></select>
+            <div class="options-grid" id="sedeContainer"></div>
     </div>
 
     <div class="form-group">
@@ -477,7 +482,8 @@
     let selectedServices = new Set();
 
     let selectedMetodoPago = '';
-    let selectedEstadoClienta = '';
+        let selectedEstadoClienta = '';
+    let selectedSede = localStorage.getItem('miSedeManicurista') || '';
     let totalSumaGlobal = 0;
 
     // Control de frescura de los datos
@@ -517,8 +523,8 @@
           const textoActual = document.getElementById('clienta').value;
 
           allServices = data.servicios;
-          populateClientasCustom(data.clientas); // vuelve a dibujar el menú
-
+                    populateClientasCustom(data.clientas); // vuelve a dibujar el menú
+          renderSedes(data.sedes || []);
           document.getElementById('clienta').value = cambioElDia ? '' : textoActual;
           fechaUltimaCarga = hoy;
         })
@@ -561,7 +567,7 @@
 
     function initApp(data) {
             populateSelect('manicurista', data.manicuristas);
-      populateSelect('sede', data.sedes || []);
+            renderSedes(data.sedes || []);
       populateClientasCustom(data.clientas);
 
       renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
@@ -575,10 +581,7 @@
             if (nombreGuardado) {
         document.getElementById('manicurista').value = nombreGuardado;
       }
-      const sedeGuardada = localStorage.getItem('miSede');
-      if (sedeGuardada) {
-        document.getElementById('sede').value = sedeGuardada;
-      }
+     
 
       fechaUltimaCarga = fechaLocalHoy();
       appIniciada = true;
@@ -663,6 +666,15 @@
       });
     }
 
+        function renderSedes(sedes) {
+      const container = document.getElementById('sedeContainer');
+      container.innerHTML = '';
+      sedes.forEach(s => {
+        const active = s === selectedSede ? ' active' : '';
+        container.innerHTML += `<div class="option-btn half${active}" onclick="selectOptionBtn(this, 'sede', '${s}')">${s}</div>`;
+      });
+    }
+
     function selectOptionBtn(element, type, value) {
       const container = element.parentElement;
 
@@ -670,7 +682,11 @@
       element.classList.add('active');
 
       if (type === 'pago') selectedMetodoPago = value;
-      if (type === 'estado') selectedEstadoClienta = value;
+            if (type === 'estado') selectedEstadoClienta = value;
+      if (type === 'sede') {
+        selectedSede = value;
+        localStorage.setItem('miSedeManicurista', value);
+      }
     }
 
     function renderCategories(categories) {
@@ -807,7 +823,7 @@
       const btn = document.getElementById('submitBtn');
       const manicurista = document.getElementById('manicurista').value;
             const clienta = document.getElementById('clienta').value;
-      const sede = document.getElementById('sede').value;
+            const sede = selectedSede;
 
       if (!manicurista || !sede || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
         btn.innerText = "Faltan datos por llenar";
@@ -820,7 +836,7 @@
       }
 
             localStorage.setItem('miNombreManicurista', manicurista);
-      localStorage.setItem('miSede', sede);
+      
 
       const formData = {
         idempotencyId: uuid(),
@@ -941,8 +957,8 @@
 
         selectedMetodoPago = '';
         selectedEstadoClienta = '';
-        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
-
+                document.querySelectorAll('#metodoPagoContainer .option-btn, #estadoClientaContainer .option-btn')
+          .forEach(btn => btn.classList.remove('active'));
         selectedServices.clear();
         updateSelectedPreview();
         renderServices();
