@@ -822,7 +822,8 @@
     // se reintenta solo hasta lograrlo. El dato nunca se pierde,
     // aunque cierres la app o se caiga el WiFi.
     // ================================================================
-    let procesandoCola = false;
+        let procesandoCola = false;
+    let esperandoPorConcurrencia = false; // true mientras el último intento chocó con otra compañera registrando
 
     function uuid() {
       if (crypto.randomUUID) return crypto.randomUUID();
@@ -855,7 +856,7 @@
       actualizarBadgePendientes();
     }
 
-        function actualizarBadgePendientes() {
+           function actualizarBadgePendientes() {
       const cola = getCola();
       const n = cola.length;
       let badge = document.getElementById('pendingBadge');
@@ -870,21 +871,33 @@
       if (n === 0) { badge.style.display = 'none'; return; }
 
       const intentosMax = Math.max(0, ...cola.map(x => x._intentos || 0));
-      const atascado = intentosMax >= 5;
+      const atascado = intentosMax >= 6;
 
-      badge.style.background = atascado ? '#FF3B30' : '#000';
-      badge.style.opacity = atascado ? '1' : '0.85';
-      badge.innerText = atascado
-        ? `⚠️ ${n} registro${n > 1 ? 's' : ''} sin confirmar. No cierres la app.`
-        : (n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`);
+      if (atascado) {
+        badge.style.background = '#FF3B30';
+        badge.style.opacity = '1';
+        badge.innerText = `⚠️ ${n} registro${n > 1 ? 's' : ''} sin confirmar. No cierres la app.`;
+      } else if (esperandoPorConcurrencia) {
+        badge.style.background = '#000';
+        badge.style.opacity = '0.9';
+        badge.innerText = n === 1
+          ? '👯 Una compañera está registrando ahora. Esperando mi turno...'
+          : `👯 Una compañera está registrando ahora. ${n} en espera...`;
+      } else {
+        badge.style.background = '#000';
+        badge.style.opacity = '0.85';
+        badge.innerText = n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`;
+      }
       badge.style.display = 'block';
     }
+
+        let formDataPendiente = null;
 
     function submitForm() {
       const btn = document.getElementById('submitBtn');
       const manicurista = document.getElementById('manicurista').value;
-            const clienta = document.getElementById('clienta').value;
-            const sede = selectedSede;
+      const clienta = document.getElementById('clienta').value;
+      const sede = selectedSede;
 
       if (!manicurista || !sede || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
         btn.innerText = "Faltan datos por llenar";
@@ -896,12 +909,12 @@
         return;
       }
 
-            localStorage.setItem('miNombreManicurista', manicurista);
-      
+      localStorage.setItem('miNombreManicurista', manicurista);
 
-      const formData = {
+      // Todavía NO se guarda ni se envía nada: primero se muestra para revisar.
+      formDataPendiente = {
         idempotencyId: uuid(),
-                manicurista: manicurista,
+        manicurista: manicurista,
         sede: sede,
         metodoPago: selectedMetodoPago,
         clienta: clienta,
@@ -910,13 +923,58 @@
         comisionExtra: document.getElementById('comisionExtra').checked
       };
 
-            // 1) Se guarda YA en la cola local
+      mostrarRevision(formDataPendiente);
+    }
+
+    // Arma el mismo texto para la pantalla de revisión y la de éxito
+    function construirResumenHtml(data) {
+      const serviciosHtml = Array.from(selectedServices).map(s => `• ${s}`).join('<br>');
+      const upsellingText = data.comisionExtra ? 'Sí (UP SELLING 🤑💕)' : 'No';
+      const displayEstado = (data.estadoClienta.trim().toLowerCase() === 'recomendada') ? 'Referida' : data.estadoClienta;
+
+      return `
+        <strong>Clienta:</strong> ${data.clienta}<br>
+        <strong>Atendida por:</strong> ${data.manicurista}<br>
+        <strong>Sede:</strong> ${data.sede}<br>
+        <strong>Pago:</strong> ${data.metodoPago}<br>
+        <strong>Estado:</strong> ${displayEstado}<br>
+        <strong>Comisión:</strong> ${upsellingText}<br><br>
+        <strong>Servicios:</strong><br>
+        <span style="color: var(--primary);">${serviciosHtml}</span>
+        <hr class="total-divider">
+        <div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>
+      `;
+    }
+
+    function mostrarRevision(data) {
+      document.getElementById('revisionContent').innerHTML = construirResumenHtml(data);
+      const overlay = document.getElementById('revisionOverlay');
+      overlay.style.display = 'flex';
+      setTimeout(() => overlay.classList.add('show'), 10);
+    }
+
+    // El lápiz: cierra la revisión y regresa al formulario tal cual lo dejó.
+    // Nada se guardó todavía, así que no hay nada que deshacer.
+    function cerrarRevision() {
+      const overlay = document.getElementById('revisionOverlay');
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.style.display = 'none', 300);
+    }
+
+    function confirmarYRegistrar() {
+      const overlay = document.getElementById('revisionOverlay');
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.style.display = 'none', 300);
+
+      const formData = formDataPendiente;
+      if (!formData) return;
+
+      // 1) RECIÉN AHORA, confirmado por la manicurista, se guarda en la cola local
       const cola = getCola();
       cola.push(formData);
       guardarCola(cola);
 
       if (almacenamientoRoto) {
-        btn.innerText = "Registrar Servicio";
         alert('⚠️ No se pudo guardar este registro en el teléfono.\n\nEsto pasa si estás en una pestaña de Safari en "Modo Privado", o si el teléfono se quedó sin espacio.\n\nAbre la app desde el ícono de tu pantalla de inicio, o avisa para registrar esta comanda manualmente:\n\n' +
           'Clienta: ' + formData.clienta + '\nManicurista: ' + formData.manicurista + '\nServicios: ' + formData.servicios);
         return;
@@ -949,10 +1007,12 @@
         body: JSON.stringify(item),
         signal: controller.signal
       })
-        .then(res => res.json())
+                .then(res => res.json())
         .then(res => {
           clearTimeout(timeoutId);
           if (res.status === 'error') throw new Error(res.message);
+
+          esperandoPorConcurrencia = false;
 
           // Éxito confirmado por el servidor: se saca de la cola
           const colaActual = getCola();
@@ -966,6 +1026,8 @@
         .catch(err => {
           clearTimeout(timeoutId);
           console.error('Reintentando envío:', err.message);
+
+          esperandoPorConcurrencia = String(err.message || '').startsWith('ESPERA:');
 
           // Se queda en la cola, sube el contador de intentos, y se reintenta con backoff
           const colaActual = getCola();
@@ -988,28 +1050,9 @@
     window.addEventListener('focus', procesarCola);
     setInterval(procesarCola, 10000);
 
-    function showSuccessModal(data) {
+        function showSuccessModal(data) {
       const modal = document.getElementById('modalOverlay');
-      const content = document.getElementById('modalContent');
-
-      const serviciosHtml = Array.from(selectedServices).map(s => `• ${s}`).join('<br>');
-      const upsellingText = data.comisionExtra ? 'Sí (UP SELLING 🤑💕)' : 'No';
-
-      const displayEstado = (data.estadoClienta.trim().toLowerCase() === 'recomendada') ? 'Referida' : data.estadoClienta;
-
-      content.innerHTML = `
-        <strong>Clienta:</strong> ${data.clienta}<br>
-                <strong>Atendida por:</strong> ${data.manicurista}<br>
-        <strong>Sede:</strong> ${data.sede}<br>
-        <strong>Pago:</strong> ${data.metodoPago}<br>
-        <strong>Estado:</strong> ${displayEstado}<br>
-        <strong>Comisión:</strong> ${upsellingText}<br><br>
-        <strong>Servicios:</strong><br>
-        <span style="color: var(--primary);">${serviciosHtml}</span>
-        <hr class="total-divider">
-        <div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>
-      `;
-
+      document.getElementById('modalContent').innerHTML = construirResumenHtml(data);
       modal.style.display = 'flex';
       setTimeout(() => modal.classList.add('show'), 10);
     }
