@@ -790,33 +790,52 @@
       });
     }
 
+        let almacenamientoRoto = false;
+
     function getCola() {
       try { return JSON.parse(localStorage.getItem('essenceColaEnvios') || '[]'); }
-      catch (e) { return []; }
+      catch (e) {
+        console.error('Cola local dañada, se reinicia vacía: ' + e.message);
+        return [];
+      }
     }
 
     function guardarCola(cola) {
-      localStorage.setItem('essenceColaEnvios', JSON.stringify(cola));
+      try {
+        localStorage.setItem('essenceColaEnvios', JSON.stringify(cola));
+        almacenamientoRoto = false;
+      } catch (e) {
+        // Casi siempre es Modo Privado de Safari, o abrir la app en una
+        // pestaña normal en vez del ícono de la pantalla de inicio.
+        almacenamientoRoto = true;
+        console.error('No se pudo guardar en el dispositivo: ' + e.message);
+      }
       actualizarBadgePendientes();
     }
 
-    function actualizarBadgePendientes() {
-      const n = getCola().length;
+        function actualizarBadgePendientes() {
+      const cola = getCola();
+      const n = cola.length;
       let badge = document.getElementById('pendingBadge');
       if (!badge) {
         badge = document.createElement('div');
         badge.id = 'pendingBadge';
         badge.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);' +
-          'background:#000;color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;' +
-          'z-index:1500;opacity:0.85;display:none;';
+          'color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;text-align:center;' +
+          'z-index:1500;display:none;max-width:90%;box-sizing:border-box;';
         document.body.appendChild(badge);
       }
-      if (n > 0) {
-        badge.innerText = n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`;
-        badge.style.display = 'block';
-      } else {
-        badge.style.display = 'none';
-      }
+      if (n === 0) { badge.style.display = 'none'; return; }
+
+      const intentosMax = Math.max(0, ...cola.map(x => x._intentos || 0));
+      const atascado = intentosMax >= 5;
+
+      badge.style.background = atascado ? '#FF3B30' : '#000';
+      badge.style.opacity = atascado ? '1' : '0.85';
+      badge.innerText = atascado
+        ? `⚠️ ${n} registro${n > 1 ? 's' : ''} sin confirmar. No cierres la app.`
+        : (n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`);
+      badge.style.display = 'block';
     }
 
     function submitForm() {
@@ -849,12 +868,19 @@
         comisionExtra: document.getElementById('comisionExtra').checked
       };
 
-      // 1) Se guarda YA en la cola local (esto no puede fallar)
+            // 1) Se guarda YA en la cola local
       const cola = getCola();
       cola.push(formData);
       guardarCola(cola);
 
-      // 2) Confirmación inmediata a la manicurista (el dato está a salvo)
+      if (almacenamientoRoto) {
+        btn.innerText = "Registrar Servicio";
+        alert('⚠️ No se pudo guardar este registro en el teléfono.\n\nEsto pasa si estás en una pestaña de Safari en "Modo Privado", o si el teléfono se quedó sin espacio.\n\nAbre la app desde el ícono de tu pantalla de inicio, o avisa para registrar esta comanda manualmente:\n\n' +
+          'Clienta: ' + formData.clienta + '\nManicurista: ' + formData.manicurista + '\nServicios: ' + formData.servicios);
+        return;
+      }
+
+      // 2) Confirmación inmediata (el dato está a salvo en este teléfono)
       showSuccessModal(formData);
 
       // 3) Se intenta sincronizar en segundo plano
@@ -870,8 +896,10 @@
       const item = cola[0];
       const intento = item._intentos || 0;
 
+           // 35s: por encima de los 30s que el servidor puede esperar por el lock,
+      // para no abortar justo cuando el servidor ya iba a responder con éxito.
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
 
       fetch(SCRIPT_URL, {
         method: 'POST',
