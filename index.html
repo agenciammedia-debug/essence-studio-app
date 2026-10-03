@@ -520,6 +520,7 @@
 
     let allServices = {};
     let clientasDataMaster = [];
+    let clientasPorSedeMaster = {}; // { Miraflores: [...], Surco: [...] }
     let activeCategory = 'Todos';
     let selectedServices = new Set();
 
@@ -564,8 +565,9 @@
           const cambioElDia = (fechaUltimaCarga && fechaUltimaCarga !== hoy);
           const textoActual = document.getElementById('clienta').value;
 
-          allServices = data.servicios;
-                    populateClientasCustom(data.clientas); // vuelve a dibujar el menú
+                    allServices = data.servicios;
+                    clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
+          populateClientasCustom(clientasPorSedeMaster[selectedSede] || []); // vuelve a dibujar el menú de la sede actual
           renderSedes(data.sedes || []);
           document.getElementById('clienta').value = cambioElDia ? '' : textoActual;
           fechaUltimaCarga = hoy;
@@ -607,10 +609,11 @@
     });
     window.addEventListener('focus', refrescarDatos);
 
-    function initApp(data) {
+        function initApp(data) {
             populateSelect('manicurista', data.manicuristas);
             renderSedes(data.sedes || []);
-      populateClientasCustom(data.clientas);
+            clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
+      populateClientasCustom(clientasPorSedeMaster[selectedSede] || []);
 
       renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
       renderButtonGrid('estadoClientaContainer', data.estadosClienta, 'estado');
@@ -723,11 +726,13 @@
       container.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
       element.classList.add('active');
 
-      if (type === 'pago') selectedMetodoPago = value;
+           if (type === 'pago') selectedMetodoPago = value;
             if (type === 'estado') selectedEstadoClienta = value;
       if (type === 'sede') {
         selectedSede = value;
         localStorage.setItem('miSedeManicurista', value);
+        // Cambia la lista de clientas agendadas a las del calendario de esta sede
+        populateClientasCustom(clientasPorSedeMaster[value] || []);
       }
     }
 
