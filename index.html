@@ -534,11 +534,18 @@
     let ultimoRefresco = 0;
     let appIniciada = false;
 
-    function fechaLocalHoy() {
+        function fechaLocalHoy() {
       const d = new Date();
       return d.getFullYear() + '-' +
              String(d.getMonth() + 1).padStart(2, '0') + '-' +
              String(d.getDate()).padStart(2, '0');
+    }
+
+    // Escapa comillas simples y backslashes antes de insertar texto libre
+    // dentro de un onclick="...('texto')" — evita que un nombre con
+    // apóstrofe (clienta, servicio, etc.) rompa silenciosamente el botón.
+    function escJs(str) {
+      return String(str == null ? '' : str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
     // El "&t=" con la hora actual obliga a iOS a pedir datos nuevos
@@ -659,8 +666,8 @@
         dropdown.innerHTML = `<div class="dropdown-item" style="color:var(--text-muted);">Nueva clienta...</div>`;
         return;
       }
-      options.forEach(opt => {
-        dropdown.innerHTML += `<div class="dropdown-item" onclick="selectClienta('${opt}')">${opt}</div>`;
+            options.forEach(opt => {
+        dropdown.innerHTML += `<div class="dropdown-item" onclick="selectClienta('${escJs(opt)}')">${opt}</div>`;
       });
     }
 
@@ -707,7 +714,7 @@
         const isLong = txt.includes('canje') || txt.length > 12;
         const shapeClass = isLong ? 'long' : 'square';
 
-        container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${opt}')">${displayLabel}</div>`;
+                container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${escJs(opt)}')">${displayLabel}</div>`;
       });
     }
 
@@ -716,7 +723,7 @@
       container.innerHTML = '';
       sedes.forEach(s => {
         const active = s === selectedSede ? ' active' : '';
-        container.innerHTML += `<div class="option-btn half${active}" onclick="selectOptionBtn(this, 'sede', '${s}')">${s}</div>`;
+                container.innerHTML += `<div class="option-btn half${active}" onclick="selectOptionBtn(this, 'sede', '${escJs(s)}')">${s}</div>`;
       });
     }
 
@@ -739,8 +746,8 @@
     function renderCategories(categories) {
       const box = document.getElementById('categoriesBox');
       box.innerHTML = `<div class="category-chip active" onclick="setCategory('Todos', this)">Todos</div>`;
-      categories.forEach(cat => {
-        box.innerHTML += `<div class="category-chip" onclick="setCategory('${cat}', this)">${cat}</div>`;
+            categories.forEach(cat => {
+        box.innerHTML += `<div class="category-chip" onclick="setCategory('${escJs(cat)}', this)">${cat}</div>`;
       });
     }
 
@@ -776,8 +783,8 @@
         const isSelected = selectedServices.has(service) ? 'selected' : '';
         const checkIcon = isSelected ? '✓' : '';
 
-        list.innerHTML += `
-          <div class="service-item ${isSelected}" onclick="toggleService('${service}')">
+                list.innerHTML += `
+          <div class="service-item ${isSelected}" onclick="toggleService('${escJs(service)}')">
             <span>${service}</span>
             <span>${checkIcon}</span>
           </div>
