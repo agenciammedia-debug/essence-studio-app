@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-  <!-- ===== PWA: esto hace que al "Añadir a Inicio" se abra a pantalla completa, sin barra de Safari ===== -->
   <title>Essence Studio - App</title>
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,311 +11,113 @@
   <meta name="theme-color" content="#e09ca9">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
-  <!-- ================================================================================================= -->
 
   <style>
-    /* Estética Apple / iOS */
     :root {
       --primary: #e09ca9;
       --bg: #f2f2f7;
       --card-bg: rgba(255, 255, 255, 0.85);
       --text-main: #000000;
-      --text-muted: #8e8e93; 
+      --text-muted: #8e8e93;
       --border: #c6c6c8;
-      --btn-light: #e5e5ea; 
+      --btn-light: #e5e5ea;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
-      margin: 0;
-      padding: 16px;
-      -webkit-font-smoothing: antialiased;
+      background-color: var(--bg); color: var(--text-main);
+      margin: 0; padding: 16px; -webkit-font-smoothing: antialiased;
     }
-
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      padding-bottom: 40px;
-    }
-
-    h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 24px;
-      color: var(--text-main);
-    }
-
+    .container { max-width: 500px; margin: 0 auto; padding-bottom: 40px; }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 24px; color: var(--text-main); }
     .form-group {
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      background: var(--card-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-
     label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      letter-spacing: 0.5px;
+      display: block; font-size: 13px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;
     }
-
     select, input[type="text"], input[type="search"] {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-size: 17px;
-      color: var(--text-main);
-      padding: 8px 0;
-      outline: none;
-      appearance: none;
+      width: 100%; border: none; background: transparent; font-size: 17px;
+      color: var(--text-main); padding: 8px 0; outline: none; appearance: none;
     }
-
-    input[list]::-webkit-calendar-picker-indicator {
-      opacity: 0.5;
-      cursor: pointer;
-    }
-
-    /* --- CUSTOM DROPDOWN PARA CLIENTAS --- */
-    .custom-dropdown-container {
-      position: relative;
-      z-index: 50;
-    }
-    
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .input-wrapper input {
-      padding-right: 35px;
-    }
-    
+    .custom-dropdown-container { position: relative; z-index: 50; }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-wrapper input { padding-right: 35px; }
     .dropdown-icon {
-      position: absolute;
-      right: 0;
-      padding: 10px 0 10px 10px;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
+      position: absolute; right: 0; padding: 10px 0 10px 10px;
+      color: var(--text-muted); cursor: pointer; display: flex;
     }
-    
     .custom-dropdown {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      margin-top: 8px;
-      max-height: 220px;
-      overflow-y: auto;
-      z-index: 100;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--border); border-radius: 12px; margin-top: 8px;
+      max-height: 220px; overflow-y: auto; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
-    
     .dropdown-item {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(60, 60, 67, 0.1);
-      font-size: 16px;
-      color: var(--text-main);
-      cursor: pointer;
+      padding: 14px 16px; border-bottom: 1px solid rgba(60, 60, 67, 0.1);
+      font-size: 16px; color: var(--text-main); cursor: pointer;
     }
-    
     .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:active { background: #e5e5ea; }
-
-    .options-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: flex-start;
-    }
-
+    .options-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start; }
     .option-btn {
-      background: var(--btn-light); 
-      color: var(--text-main);
-      border-radius: 14px; 
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px;
-      box-sizing: border-box;
-      line-height: 1.2;
+      background: var(--btn-light); color: var(--text-main); border-radius: 14px;
+      font-size: 14px; font-weight: 600; text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none; display: flex; align-items: center;
+      justify-content: center; padding: 8px; box-sizing: border-box; line-height: 1.2;
     }
-
-    .option-btn.square {
-      width: calc(33.333% - 7px);
-      aspect-ratio: 1 / 1; 
-    }
-
-        .option-btn.long {
-      width: 100%;
-      height: 48px;
-    }
-
-    .option-btn.half {
-      width: calc(50% - 5px);
-      height: 48px;
-    }
-
+    .option-btn.square { width: calc(33.333% - 7px); aspect-ratio: 1 / 1; }
+    .option-btn.long { width: 100%; height: 48px; }
+    .option-btn.half { width: calc(50% - 5px); height: 48px; }
     .option-btn.active {
-      background: var(--primary);
-      color: white;
-      box-shadow: 0 4px 10px rgba(224, 156, 169, 0.4);
-      transform: scale(0.97); 
+      background: var(--primary); color: white;
+      box-shadow: 0 4px 10px rgba(224, 156, 169, 0.4); transform: scale(0.97);
     }
-
     .categories-wrapper {
-      display: flex;
-      overflow-x: auto;
-      gap: 10px;
-      padding-bottom: 10px;
-      -webkit-overflow-scrolling: touch;
+      display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; -webkit-overflow-scrolling: touch;
     }
-    
     .categories-wrapper::-webkit-scrollbar { display: none; }
-
     .category-chip {
-      background: var(--btn-light); 
-      color: var(--text-main);
-      border-radius: 20px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--btn-light); color: var(--text-main); border-radius: 20px;
+      padding: 8px 16px; font-size: 14px; font-weight: 500; white-space: nowrap;
+      cursor: pointer; transition: all 0.2s;
     }
-
-    .category-chip.active {
-      background: var(--primary);
-      color: white;
-    }
-
+    .category-chip.active { background: var(--primary); color: white; }
     .search-box {
-      background: rgba(118, 118, 128, 0.12);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
+      background: rgba(118, 118, 128, 0.12); border-radius: 10px;
+      padding: 8px 12px; margin-bottom: 16px; display: flex; align-items: center;
     }
-
-    .services-list {
-      max-height: 450px;
-      overflow-y: auto;
-    }
-
+    .services-list { max-height: 450px; overflow-y: auto; }
     .service-item {
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(60, 60, 67, 0.1);
-      font-size: 17px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
+      padding: 12px 0; border-bottom: 1px solid rgba(60, 60, 67, 0.1); font-size: 17px;
+      display: flex; justify-content: space-between; align-items: center; cursor: pointer;
     }
     .service-item:last-child { border-bottom: none; }
-    
-    .service-item.selected {
-      color: var(--primary);
-      font-weight: 600;
-    }
-    
-    .selected-list {
-      margin-top: 12px;
-      padding-left: 20px;
-      font-size: 15px;
-      color: var(--primary);
-      font-weight: 500;
-    }
-
-    .total-divider {
-      border: 0;
-      border-top: 1px solid rgba(60, 60, 67, 0.2);
-      margin: 12px 0;
-    }
-
-    .total-text {
-      text-align: right;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .switch-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 51px;
-      height: 31px;
-    }
-
+    .service-item.selected { color: var(--primary); font-weight: 600; }
+    .selected-list { margin-top: 12px; padding-left: 20px; font-size: 15px; color: var(--primary); font-weight: 500; }
+    .total-divider { border: 0; border-top: 1px solid rgba(60, 60, 67, 0.2); margin: 12px 0; }
+    .total-text { text-align: right; font-size: 18px; font-weight: 700; color: var(--text-main); }
+    .switch-container { display: flex; justify-content: space-between; align-items: center; }
+    .switch { position: relative; display: inline-block; width: 51px; height: 31px; }
     .switch input { opacity: 0; width: 0; height: 0; }
-
     .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #e5e5ea; 
-      transition: .4s;
-      border-radius: 31px;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e5e5ea; transition: .4s; border-radius: 31px;
     }
-
     .slider:before {
-      position: absolute;
-      content: "";
-      height: 27px; width: 27px;
-      left: 2px; bottom: 2px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+      position: absolute; content: ""; height: 27px; width: 27px; left: 2px; bottom: 2px;
+      background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
     }
-
     input:checked + .slider { background-color: var(--primary); }
     input:checked + .slider:before { transform: translateX(20px); }
-
     .btn-submit {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      width: 100%;
-      padding: 16px;
-      font-size: 17px;
-      font-weight: 600;
-      border-radius: 14px;
-      cursor: pointer;
-      margin-top: 24px;
-      transition: opacity 0.2s;
+      background-color: var(--primary); color: white; border: none; width: 100%;
+      padding: 16px; font-size: 17px; font-weight: 600; border-radius: 14px;
+      cursor: pointer; margin-top: 24px; transition: opacity 0.2s;
     }
     .btn-submit:active { opacity: 0.7; }
     .btn-submit:disabled { background-color: #c6c6c8; }
-
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20%, 60% { transform: translateX(-8px); }
@@ -325,107 +125,46 @@
     }
     .shake-animation {
       animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-      background-color: #ff3b30 !important; 
+      background-color: #ff3b30 !important;
     }
-
     .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center;
+      z-index: 2000; opacity: 0; transition: opacity 0.3s ease;
     }
-
     .modal-card {
-      background: rgba(255, 255, 255, 0.95);
-      width: 320px;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      transform: scale(0.9);
-      transition: transform 0.3s ease;
+      background: rgba(255, 255, 255, 0.95); width: 320px; max-height: 85vh; overflow-y: auto;
+      border-radius: 18px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transform: scale(0.9); transition: transform 0.3s ease; box-sizing: border-box;
     }
-
     .modal-overlay.show { opacity: 1; }
     .modal-overlay.show .modal-card { transform: scale(1); }
-
-    .modal-icon {
-      font-size: 40px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
-        .modal-title {
-      font-size: 20px;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .modal-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
-    .modal-header-row .modal-title {
-      margin-bottom: 0;
-      text-align: left;
-      font-size: 18px;
-    }
-
+    .modal-icon { font-size: 40px; text-align: center; margin-bottom: 10px; }
+    .modal-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 16px; }
+    .modal-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-header-row .modal-title { margin-bottom: 0; text-align: left; font-size: 18px; }
     .modal-edit-btn {
-      background: var(--btn-light);
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: var(--text-main);
-      flex-shrink: 0;
-      padding: 0;
+      background: var(--btn-light); border: none; width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      color: var(--text-main); flex-shrink: 0; padding: 0;
     }
     .modal-edit-btn:active { opacity: 0.6; }
-
-    .modal-body {
-      font-size: 15px;
-      color: #333;
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-
+    .modal-body { font-size: 15px; color: #333; margin-bottom: 24px; line-height: 1.6; }
     .modal-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
+      background: var(--primary); color: white; border: none; width: 100%;
+      padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
     }
-
+    .modal-btn.danger { background: #ff3b30; }
+    .dup-warning {
+      background: #fff1f0; border: 1px solid #ff3b30; color: #c4291f;
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
+      font-size: 14px; font-weight: 600; line-height: 1.4;
+    }
     #loader {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--bg);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      font-weight: 600;
-      color: var(--text-muted);
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg);
+      display: flex; justify-content: center; align-items: center; z-index: 1000;
+      font-weight: 600; color: var(--text-muted);
     }
   </style>
 </head>
@@ -433,7 +172,7 @@
 
   <div id="loader">Cargando datos...</div>
 
-    <div class="modal-overlay" id="revisionOverlay">
+  <div class="modal-overlay" id="revisionOverlay">
     <div class="modal-card">
       <div class="modal-header-row">
         <div class="modal-title">Revisa tu comanda</div>
@@ -442,7 +181,7 @@
         </button>
       </div>
       <div class="modal-body" id="revisionContent"></div>
-      <button class="modal-btn" onclick="confirmarYRegistrar()">Confirmar y Registrar</button>
+      <button class="modal-btn" id="confirmBtn" onclick="confirmarYRegistrar()">Confirmar y Registrar</button>
     </div>
   </div>
 
@@ -457,15 +196,15 @@
 
   <div class="container" style="display: none;" id="app">
     <h1>Registro Essence</h1>
-    
+
     <div class="form-group">
       <label>Manicurista</label>
-            <select id="manicurista"></select>
+      <select id="manicurista"></select>
     </div>
 
     <div class="form-group">
       <label>Sede</label>
-            <div class="options-grid" id="sedeContainer"></div>
+      <div class="options-grid" id="sedeContainer"></div>
     </div>
 
     <div class="form-group">
@@ -483,7 +222,7 @@
       </div>
       <div id="clientas-dropdown" class="custom-dropdown"></div>
     </div>
-    
+
     <div class="form-group">
       <label>Estado de Clienta</label>
       <div class="options-grid" id="estadoClientaContainer"></div>
@@ -492,11 +231,9 @@
     <div class="form-group">
       <label>Servicios</label>
       <div class="categories-wrapper" id="categoriesBox"></div>
-      
       <div class="search-box">
         <input type="search" id="searchService" placeholder="Buscar cualquier servicio..." onkeyup="renderServices()">
       </div>
-      
       <div class="services-list" id="servicesList"></div>
       <div id="selectedServicesPreview"></div>
     </div>
@@ -513,113 +250,86 @@
   </div>
 
   <script>
-    // ================================================================
-    // URL DE TU APPS SCRIPT DESPLEGADO COMO WEB APP (termina en /exec)
-    // ================================================================
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycrbhwiSYrj-pfygpnsQ-y8cbt2BK5DyeZc1gYp5DCjJjeSGGh1Lqcn2UooYuOEfXM/exec";
+    const VENTANA_DUP_MS = 15 * 60 * 1000; // igual que en el servidor
 
     let allServices = {};
     let clientasDataMaster = [];
-    let clientasPorSedeMaster = {}; // { Miraflores: [...], Surco: [...] }
+    let clientasPorSedeMaster = {};
     let activeCategory = 'Todos';
     let selectedServices = new Set();
 
     let selectedMetodoPago = '';
-        let selectedEstadoClienta = '';
+    let selectedEstadoClienta = '';
     let selectedSede = localStorage.getItem('miSedeManicurista') || '';
     let totalSumaGlobal = 0;
 
-    // Control de frescura de los datos
     let fechaUltimaCarga = null;
     let ultimoRefresco = 0;
     let appIniciada = false;
 
-        function fechaLocalHoy() {
+    function fechaLocalHoy() {
       const d = new Date();
-      return d.getFullYear() + '-' +
-             String(d.getMonth() + 1).padStart(2, '0') + '-' +
-             String(d.getDate()).padStart(2, '0');
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
-    // Escapa comillas simples y backslashes antes de insertar texto libre
-    // dentro de un onclick="...('texto')" — evita que un nombre con
-    // apóstrofe (clienta, servicio, etc.) rompa silenciosamente el botón.
     function escJs(str) {
       return String(str == null ? '' : str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     }
 
-    // El "&t=" con la hora actual obliga a iOS a pedir datos nuevos
-    // en vez de devolver la respuesta que guardó ayer.
     function pedirDatos() {
-      const url = SCRIPT_URL + '?action=getFormData&t=' + Date.now();
-      return fetch(url, { cache: 'no-store' }).then(r => r.json());
+      return fetch(SCRIPT_URL + '?action=getFormData&t=' + Date.now(), { cache: 'no-store' }).then(r => r.json());
     }
 
     function cargarDatosFrescos() {
       ultimoRefresco = Date.now();
-
       pedirDatos()
         .then(data => {
-          localStorage.setItem('essenceDataCache', JSON.stringify(data));
-          localStorage.setItem('essenceDataCacheFecha', fechaLocalHoy());
+          try {
+            localStorage.setItem('essenceDataCache', JSON.stringify(data));
+            localStorage.setItem('essenceDataCacheFecha', fechaLocalHoy());
+          } catch (e) {}
 
-          if (!appIniciada) {
-            initApp(data);
-            return;
-          }
+          if (!appIniciada) { initApp(data); return; }
 
           const hoy = fechaLocalHoy();
           const cambioElDia = (fechaUltimaCarga && fechaUltimaCarga !== hoy);
           const textoActual = document.getElementById('clienta').value;
 
-                    allServices = data.servicios;
-                    clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
-          populateClientasCustom(clientasPorSedeMaster[selectedSede] || []); // vuelve a dibujar el menú de la sede actual
+          allServices = data.servicios;
+          clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
+          populateClientasCustom(clientasPorSedeMaster[selectedSede] || []);
           renderSedes(data.sedes || []);
           document.getElementById('clienta').value = cambioElDia ? '' : textoActual;
           fechaUltimaCarga = hoy;
         })
         .catch(err => {
-          if (!appIniciada) {
-            document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
-          }
+          if (!appIniciada) document.getElementById('loader').innerText = 'Error al cargar datos. Revisa tu conexión.';
           console.error('Error al actualizar datos:', err);
         });
     }
 
-    // ARRANQUE: solo usa el caché guardado si es del MISMO día
     (function arrancar() {
       const cacheRaw = localStorage.getItem('essenceDataCache');
-      const cacheFecha = localStorage.getItem('essenceDataCacheFecha');
-
-      if (cacheRaw && cacheFecha === fechaLocalHoy()) {
-        try {
-          initApp(JSON.parse(cacheRaw));
-        } catch (e) {
-          console.error('Error leyendo caché local:', e);
-        }
+      if (cacheRaw && localStorage.getItem('essenceDataCacheFecha') === fechaLocalHoy()) {
+        try { initApp(JSON.parse(cacheRaw)); } catch (e) { console.error('Error leyendo caché local:', e); }
       }
       cargarDatosFrescos();
     })();
 
-    // Cada vez que vuelves a la app desde el fondo, pide la lista de hoy
     function refrescarDatos() {
       if (Date.now() - ultimoRefresco < 15000) return;
       cargarDatosFrescos();
     }
 
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') refrescarDatos();
-    });
-    window.addEventListener('pageshow', function (e) {
-      if (e.persisted) refrescarDatos();
-    });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refrescarDatos(); });
+    window.addEventListener('pageshow', e => { if (e.persisted) refrescarDatos(); });
     window.addEventListener('focus', refrescarDatos);
 
-        function initApp(data) {
-            populateSelect('manicurista', data.manicuristas);
-            renderSedes(data.sedes || []);
-            clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
+    function initApp(data) {
+      populateSelect('manicurista', data.manicuristas);
+      renderSedes(data.sedes || []);
+      clientasPorSedeMaster = data.clientasPorSede || { Miraflores: data.clientas || [] };
       populateClientasCustom(clientasPorSedeMaster[selectedSede] || []);
 
       renderButtonGrid('metodoPagoContainer', data.metodosPago, 'pago');
@@ -630,10 +340,7 @@
       renderServices();
 
       const nombreGuardado = localStorage.getItem('miNombreManicurista');
-            if (nombreGuardado) {
-        document.getElementById('manicurista').value = nombreGuardado;
-      }
-     
+      if (nombreGuardado) document.getElementById('manicurista').value = nombreGuardado;
 
       fechaUltimaCarga = fechaLocalHoy();
       appIniciada = true;
@@ -641,7 +348,6 @@
       document.getElementById('loader').style.display = 'none';
       document.getElementById('app').style.display = 'block';
 
-      // Si quedaron registros sin sincronizar (app cerrada, sin señal, etc.), reintenta ya
       actualizarBadgePendientes();
       procesarCola();
     }
@@ -649,9 +355,7 @@
     function populateSelect(id, options) {
       const select = document.getElementById(id);
       select.innerHTML = '<option value="" disabled selected>Seleccionar...</option>';
-      options.forEach(opt => {
-        select.innerHTML += `<option value="${opt}">${opt}</option>`;
-      });
+      options.forEach(opt => { select.innerHTML += `<option value="${opt}">${opt}</option>`; });
     }
 
     function populateClientasCustom(options) {
@@ -666,14 +370,12 @@
         dropdown.innerHTML = `<div class="dropdown-item" style="color:var(--text-muted);">Nueva clienta...</div>`;
         return;
       }
-            options.forEach(opt => {
+      options.forEach(opt => {
         dropdown.innerHTML += `<div class="dropdown-item" onclick="selectClienta('${escJs(opt)}')">${opt}</div>`;
       });
     }
 
-    function showClientas() {
-      document.getElementById('clientas-dropdown').style.display = 'block';
-    }
+    function showClientas() { document.getElementById('clientas-dropdown').style.display = 'block'; }
 
     function toggleClientas() {
       const dd = document.getElementById('clientas-dropdown');
@@ -682,8 +384,7 @@
 
     function filterClientas() {
       const val = document.getElementById('clienta').value.toLowerCase();
-      const filtered = clientasDataMaster.filter(c => c.toLowerCase().includes(val));
-      renderClientas(filtered);
+      renderClientas(clientasDataMaster.filter(c => c.toLowerCase().includes(val)));
       showClientas();
     }
 
@@ -692,7 +393,7 @@
       document.getElementById('clientas-dropdown').style.display = 'none';
     }
 
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', e => {
       if (!e.target.closest('.custom-dropdown-container')) {
         const dd = document.getElementById('clientas-dropdown');
         if (dd) dd.style.display = 'none';
@@ -702,43 +403,32 @@
     function renderButtonGrid(containerId, options, type) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
-
       options.forEach(opt => {
         let displayLabel = opt;
-
-        if (type === 'estado' && opt.trim().toLowerCase() === 'recomendada') {
-          displayLabel = 'Referida';
-        }
-
+        if (type === 'estado' && opt.trim().toLowerCase() === 'recomendada') displayLabel = 'Referida';
         const txt = displayLabel.toLowerCase();
-        const isLong = txt.includes('canje') || txt.length > 12;
-        const shapeClass = isLong ? 'long' : 'square';
-
-                container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${escJs(opt)}')">${displayLabel}</div>`;
+        const shapeClass = (txt.includes('canje') || txt.length > 12) ? 'long' : 'square';
+        container.innerHTML += `<div class="option-btn ${shapeClass}" onclick="selectOptionBtn(this, '${type}', '${escJs(opt)}')">${displayLabel}</div>`;
       });
     }
 
-        function renderSedes(sedes) {
+    function renderSedes(sedes) {
       const container = document.getElementById('sedeContainer');
       container.innerHTML = '';
       sedes.forEach(s => {
         const active = s === selectedSede ? ' active' : '';
-                container.innerHTML += `<div class="option-btn half${active}" onclick="selectOptionBtn(this, 'sede', '${escJs(s)}')">${s}</div>`;
+        container.innerHTML += `<div class="option-btn half${active}" onclick="selectOptionBtn(this, 'sede', '${escJs(s)}')">${s}</div>`;
       });
     }
 
     function selectOptionBtn(element, type, value) {
-      const container = element.parentElement;
-
-      container.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
+      element.parentElement.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('active'));
       element.classList.add('active');
-
-           if (type === 'pago') selectedMetodoPago = value;
-            if (type === 'estado') selectedEstadoClienta = value;
+      if (type === 'pago') selectedMetodoPago = value;
+      if (type === 'estado') selectedEstadoClienta = value;
       if (type === 'sede') {
         selectedSede = value;
         localStorage.setItem('miSedeManicurista', value);
-        // Cambia la lista de clientas agendadas a las del calendario de esta sede
         populateClientasCustom(clientasPorSedeMaster[value] || []);
       }
     }
@@ -746,7 +436,7 @@
     function renderCategories(categories) {
       const box = document.getElementById('categoriesBox');
       box.innerHTML = `<div class="category-chip active" onclick="setCategory('Todos', this)">Todos</div>`;
-            categories.forEach(cat => {
+      categories.forEach(cat => {
         box.innerHTML += `<div class="category-chip" onclick="setCategory('${escJs(cat)}', this)">${cat}</div>`;
       });
     }
@@ -765,39 +455,26 @@
       list.innerHTML = '';
 
       let servicesToShow = [];
-
-      if (searchTerm) {
+      if (searchTerm || activeCategory === 'Todos') {
         Object.values(allServices).forEach(arr => servicesToShow.push(...arr));
-        servicesToShow = servicesToShow.filter(s => s.toLowerCase().includes(searchTerm));
+        if (searchTerm) servicesToShow = servicesToShow.filter(s => s.toLowerCase().includes(searchTerm));
       } else {
-        if (activeCategory === 'Todos') {
-          Object.values(allServices).forEach(arr => servicesToShow.push(...arr));
-        } else {
-          servicesToShow = allServices[activeCategory] || [];
-        }
+        servicesToShow = allServices[activeCategory] || [];
       }
 
-      servicesToShow = [...new Set(servicesToShow)];
-
-      servicesToShow.forEach(service => {
+      [...new Set(servicesToShow)].forEach(service => {
         const isSelected = selectedServices.has(service) ? 'selected' : '';
-        const checkIcon = isSelected ? '✓' : '';
-
-                list.innerHTML += `
+        list.innerHTML += `
           <div class="service-item ${isSelected}" onclick="toggleService('${escJs(service)}')">
             <span>${service}</span>
-            <span>${checkIcon}</span>
-          </div>
-        `;
+            <span>${isSelected ? '✓' : ''}</span>
+          </div>`;
       });
     }
 
     function toggleService(service) {
-      if (selectedServices.has(service)) {
-        selectedServices.delete(service);
-      } else {
-        selectedServices.add(service);
-      }
+      if (selectedServices.has(service)) selectedServices.delete(service);
+      else selectedServices.add(service);
       updateSelectedPreview();
       renderServices();
     }
@@ -805,37 +482,59 @@
     function updateSelectedPreview() {
       const preview = document.getElementById('selectedServicesPreview');
       totalSumaGlobal = 0;
+      if (selectedServices.size === 0) { preview.innerHTML = ''; return; }
 
-      if (selectedServices.size > 0) {
-        let html = '<ul class="selected-list">';
-
-        selectedServices.forEach(s => {
-          html += `<li>${s}</li>`;
-          const regex = /-\s*(\d+(?:\.\d+)?)\s*soles/i;
-          const match = s.match(regex);
-          if (match && match[1]) {
-            totalSumaGlobal += parseFloat(match[1]);
-          }
-        });
-
-        html += '</ul>';
-        html += '<hr class="total-divider">';
-        html += `<div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>`;
-
-        preview.innerHTML = html;
-      } else {
-        preview.innerHTML = '';
-      }
+      let html = '<ul class="selected-list">';
+      selectedServices.forEach(s => {
+        html += `<li>${s}</li>`;
+        const match = s.match(/-\s*(\d+(?:\.\d+)?)\s*soles/i);
+        if (match && match[1]) totalSumaGlobal += parseFloat(match[1]);
+      });
+      html += '</ul><hr class="total-divider">';
+      html += `<div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>`;
+      preview.innerHTML = html;
     }
 
     // ================================================================
-    // COLA PERSISTENTE: el registro se guarda en localStorage ANTES
-    // de intentar enviarlo. Si falla la red o el servidor está ocupado,
-    // se reintenta solo hasta lograrlo. El dato nunca se pierde,
-    // aunque cierres la app o se caiga el WiFi.
+    // ANTI-DUPLICADOS (lado teléfono)
+    // Huella = manicurista + clienta + servicios (mismo algoritmo que el servidor).
     // ================================================================
-        let procesandoCola = false;
-    let esperandoPorConcurrencia = false; // true mientras el último intento chocó con otra compañera registrando
+    function normalizar(x) {
+      return String(x == null ? '' : x).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ').trim();
+    }
+
+    function huella(m, c, s) {
+      const serv = String(s || '').split(/\s*[,+]\s*/).map(normalizar).filter(Boolean).sort().join(',');
+      return normalizar(m) + '|' + normalizar(c) + '|' + serv;
+    }
+
+    function getHistorial() {
+      try { return JSON.parse(localStorage.getItem('essenceHistorial') || '[]'); } catch (e) { return []; }
+    }
+
+    function registrarEnHistorial(d) {
+      const ahora = Date.now();
+      const h = getHistorial().filter(x => ahora - x.t < VENTANA_DUP_MS);
+      h.push({ h: huella(d.manicurista, d.clienta, d.servicios), t: ahora });
+      try { localStorage.setItem('essenceHistorial', JSON.stringify(h)); } catch (e) {}
+    }
+
+    // Devuelve hace cuántos minutos se registró la misma comanda (0 = no hay)
+    function buscarDuplicadoLocal(d) {
+      const hh = huella(d.manicurista, d.clienta, d.servicios);
+      const ahora = Date.now();
+      const m = getHistorial().filter(x => x.h === hh && ahora - x.t < VENTANA_DUP_MS).pop();
+      return m ? Math.max(1, Math.round((ahora - m.t) / 60000)) : 0;
+    }
+
+    // ================================================================
+    // COLA PERSISTENTE
+    // ================================================================
+    let procesandoCola = false;
+    let esperandoPorConcurrencia = false;
+    let almacenamientoRoto = false;
 
     function uuid() {
       if (crypto.randomUUID) return crypto.randomUUID();
@@ -845,14 +544,9 @@
       });
     }
 
-        let almacenamientoRoto = false;
-
     function getCola() {
       try { return JSON.parse(localStorage.getItem('essenceColaEnvios') || '[]'); }
-      catch (e) {
-        console.error('Cola local dañada, se reinicia vacía: ' + e.message);
-        return [];
-      }
+      catch (e) { console.error('Cola local dañada: ' + e.message); return []; }
     }
 
     function guardarCola(cola) {
@@ -860,15 +554,17 @@
         localStorage.setItem('essenceColaEnvios', JSON.stringify(cola));
         almacenamientoRoto = false;
       } catch (e) {
-        // Casi siempre es Modo Privado de Safari, o abrir la app en una
-        // pestaña normal en vez del ícono de la pantalla de inicio.
         almacenamientoRoto = true;
         console.error('No se pudo guardar en el dispositivo: ' + e.message);
       }
       actualizarBadgePendientes();
     }
 
-           function actualizarBadgePendientes() {
+    function quitarDeCola(id) {
+      guardarCola(getCola().filter(x => x.idempotencyId !== id));
+    }
+
+    function actualizarBadgePendientes() {
       const cola = getCola();
       const n = cola.length;
       let badge = document.getElementById('pendingBadge');
@@ -882,54 +578,43 @@
       }
       if (n === 0) { badge.style.display = 'none'; return; }
 
-      const intentosMax = Math.max(0, ...cola.map(x => x._intentos || 0));
-      const atascado = intentosMax >= 6;
-
+      const atascado = Math.max(0, ...cola.map(x => x._intentos || 0)) >= 6;
       if (atascado) {
-        badge.style.background = '#FF3B30';
-        badge.style.opacity = '1';
-        badge.innerText = `⚠️ ${n} registro${n > 1 ? 's' : ''} sin confirmar. No cierres la app.`;
+        badge.style.background = '#FF3B30'; badge.style.opacity = '1';
+        badge.innerText = `⚠️ ${n} registro${n > 1 ? 's' : ''} sin confirmar. No cierres la app ni lo vuelvas a registrar.`;
       } else if (esperandoPorConcurrencia) {
-        badge.style.background = '#000';
-        badge.style.opacity = '0.9';
+        badge.style.background = '#000'; badge.style.opacity = '0.9';
         badge.innerText = n === 1
           ? '👯 Una compañera está registrando ahora. Esperando mi turno...'
           : `👯 Una compañera está registrando ahora. ${n} en espera...`;
       } else {
-        badge.style.background = '#000';
-        badge.style.opacity = '0.85';
+        badge.style.background = '#000'; badge.style.opacity = '0.85';
         badge.innerText = n === 1 ? 'Sincronizando 1 registro...' : `Sincronizando ${n} registros...`;
       }
       badge.style.display = 'block';
     }
 
-        let formDataPendiente = null;
+    let formDataPendiente = null;
 
     function submitForm() {
       const btn = document.getElementById('submitBtn');
       const manicurista = document.getElementById('manicurista').value;
-      const clienta = document.getElementById('clienta').value;
+      const clienta = document.getElementById('clienta').value.trim();
       const sede = selectedSede;
 
       if (!manicurista || !sede || !clienta || !selectedMetodoPago || !selectedEstadoClienta || selectedServices.size === 0) {
         btn.innerText = "Faltan datos por llenar";
         btn.classList.add('shake-animation');
-        setTimeout(() => {
-          btn.classList.remove('shake-animation');
-          btn.innerText = "Registrar Servicio";
-        }, 500);
+        setTimeout(() => { btn.classList.remove('shake-animation'); btn.innerText = "Registrar Servicio"; }, 500);
         return;
       }
 
       localStorage.setItem('miNombreManicurista', manicurista);
 
-      // Todavía NO se guarda ni se envía nada: primero se muestra para revisar.
       formDataPendiente = {
         idempotencyId: uuid(),
-        manicurista: manicurista,
-        sede: sede,
+        manicurista, sede, clienta,
         metodoPago: selectedMetodoPago,
-        clienta: clienta,
         servicios: Array.from(selectedServices).join(', '),
         estadoClienta: selectedEstadoClienta,
         comisionExtra: document.getElementById('comisionExtra').checked
@@ -938,12 +623,10 @@
       mostrarRevision(formDataPendiente);
     }
 
-    // Arma el mismo texto para la pantalla de revisión y la de éxito
     function construirResumenHtml(data) {
       const serviciosHtml = Array.from(selectedServices).map(s => `• ${s}`).join('<br>');
       const upsellingText = data.comisionExtra ? 'Sí (UP SELLING 🤑💕)' : 'No';
       const displayEstado = (data.estadoClienta.trim().toLowerCase() === 'recomendada') ? 'Referida' : data.estadoClienta;
-
       return `
         <strong>Clienta:</strong> ${data.clienta}<br>
         <strong>Atendida por:</strong> ${data.manicurista}<br>
@@ -954,49 +637,77 @@
         <strong>Servicios:</strong><br>
         <span style="color: var(--primary);">${serviciosHtml}</span>
         <hr class="total-divider">
-        <div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>
-      `;
+        <div class="total-text">Total: S/ ${totalSumaGlobal.toFixed(2)}</div>`;
     }
 
     function mostrarRevision(data) {
-      document.getElementById('revisionContent').innerHTML = construirResumenHtml(data);
+      const minutos = buscarDuplicadoLocal(data);
+      const btn = document.getElementById('confirmBtn');
+      let aviso = '';
+
+      if (minutos) {
+        aviso = `<div class="dup-warning">⚠️ Ya registraste esta MISMA comanda hace ${minutos} min.<br>Si fue un error, toca el lápiz y no la registres otra vez.</div>`;
+        data.forzar = true; // ella decidió conscientemente registrarla de nuevo
+        btn.innerText = 'Sí, es otra comanda: registrar';
+        btn.classList.add('danger');
+      } else {
+        btn.innerText = 'Confirmar y Registrar';
+        btn.classList.remove('danger');
+      }
+      btn.disabled = false;
+
+      document.getElementById('revisionContent').innerHTML = aviso + construirResumenHtml(data);
       const overlay = document.getElementById('revisionOverlay');
       overlay.style.display = 'flex';
       setTimeout(() => overlay.classList.add('show'), 10);
     }
 
-    // El lápiz: cierra la revisión y regresa al formulario tal cual lo dejó.
-    // Nada se guardó todavía, así que no hay nada que deshacer.
-    function cerrarRevision() {
+    function ocultarRevision() {
       const overlay = document.getElementById('revisionOverlay');
       overlay.classList.remove('show');
       setTimeout(() => overlay.style.display = 'none', 300);
     }
 
-    function confirmarYRegistrar() {
-      const overlay = document.getElementById('revisionOverlay');
-      overlay.classList.remove('show');
-      setTimeout(() => overlay.style.display = 'none', 300);
+    function cerrarRevision() {
+      formDataPendiente = null;
+      ocultarRevision();
+    }
 
+    function confirmarYRegistrar() {
+      // Candado anti doble-toque: solo el PRIMER toque pasa
       const formData = formDataPendiente;
       if (!formData) return;
+      formDataPendiente = null;
+      document.getElementById('confirmBtn').disabled = true;
+      ocultarRevision();
 
-      // 1) RECIÉN AHORA, confirmado por la manicurista, se guarda en la cola local
       const cola = getCola();
-      cola.push(formData);
+      if (!cola.some(x => x.idempotencyId === formData.idempotencyId)) cola.push(formData);
       guardarCola(cola);
 
       if (almacenamientoRoto) {
-        alert('⚠️ No se pudo guardar este registro en el teléfono.\n\nEsto pasa si estás en una pestaña de Safari en "Modo Privado", o si el teléfono se quedó sin espacio.\n\nAbre la app desde el ícono de tu pantalla de inicio, o avisa para registrar esta comanda manualmente:\n\n' +
+        alert('⚠️ No se pudo guardar este registro en el teléfono.\n\nAbre la app desde el ícono de tu pantalla de inicio (no desde Safari en Modo Privado), o avisa para registrar esta comanda manualmente:\n\n' +
           'Clienta: ' + formData.clienta + '\nManicurista: ' + formData.manicurista + '\nServicios: ' + formData.servicios);
         return;
       }
 
-      // 2) Confirmación inmediata (el dato está a salvo en este teléfono)
+      registrarEnHistorial(formData);
       showSuccessModal(formData);
-
-      // 3) Se intenta sincronizar en segundo plano
       procesarCola();
+    }
+
+    function avisarDuplicadoServidor(item, res) {
+      // setTimeout para no bloquear la cola mientras se muestra el aviso
+      setTimeout(() => {
+        const ok = confirm(`⚠️ Esta comanda YA estaba registrada hace ${res.minutos || 'pocos'} min, así que NO se duplicó.\n\n` +
+          `Clienta: ${item.clienta}\nServicios: ${item.servicios}\n\n` +
+          `¿Es realmente OTRA comanda distinta y quieres registrarla igual?`);
+        if (!ok) return;
+        const cola = getCola();
+        cola.push(Object.assign({}, item, { forzar: true, _intentos: 0 }));
+        guardarCola(cola);
+        procesarCola();
+      }, 0);
     }
 
     function procesarCola() {
@@ -1008,61 +719,64 @@
       const item = cola[0];
       const intento = item._intentos || 0;
 
-           // 35s: por encima de los 30s que el servidor puede esperar por el lock,
-      // para no abortar justo cuando el servidor ya iba a responder con éxito.
+      // 45s: por encima de los 25s que el servidor espera por el lock + escritura
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 35000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      const { _intentos, ...payload } = item;
 
       fetch(SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(item),
+        body: JSON.stringify(payload),
         signal: controller.signal
       })
-                .then(res => res.json())
+        .then(r => r.json())
         .then(res => {
           clearTimeout(timeoutId);
-          if (res.status === 'error') throw new Error(res.message);
+
+          if (res.status === 'ok') {
+            quitarDeCola(item.idempotencyId);
+          } else if (res.status === 'duplicado') {
+            quitarDeCola(item.idempotencyId);
+            avisarDuplicadoServidor(item, res);
+          } else if (res.status === 'invalido') {
+            // Error permanente: reintentar no sirve, se avisa y se saca de la cola
+            quitarDeCola(item.idempotencyId);
+            alert('⚠️ No se pudo registrar: ' + res.message + '\n\nClienta: ' + item.clienta + '\nServicios: ' + item.servicios + '\n\nVuelve a llenarla.');
+          } else {
+            throw new Error(res.message || 'Respuesta inesperada del servidor');
+          }
 
           esperandoPorConcurrencia = false;
-
-          // Éxito confirmado por el servidor: se saca de la cola
-          const colaActual = getCola();
-          const idx = colaActual.findIndex(x => x.idempotencyId === item.idempotencyId);
-          if (idx !== -1) colaActual.splice(idx, 1);
-          guardarCola(colaActual);
-
           procesandoCola = false;
-          if (getCola().length > 0) procesarCola(); // sigue con el próximo
+          actualizarBadgePendientes();
+          if (getCola().length > 0) procesarCola();
         })
         .catch(err => {
           clearTimeout(timeoutId);
           console.error('Reintentando envío:', err.message);
-
           esperandoPorConcurrencia = String(err.message || '').startsWith('ESPERA:');
 
-          // Se queda en la cola, sube el contador de intentos, y se reintenta con backoff
+          // Mismo idempotencyId en cada reintento -> el servidor nunca duplica
           const colaActual = getCola();
           const idx = colaActual.findIndex(x => x.idempotencyId === item.idempotencyId);
           if (idx !== -1) colaActual[idx]._intentos = intento + 1;
           guardarCola(colaActual);
 
           procesandoCola = false;
-          const espera = Math.min(2000 * Math.pow(1.5, intento), 15000); // 2s -> ... -> tope 15s
+          // Jitter aleatorio: evita que 7 teléfonos reintenten en el mismo segundo
+          const espera = Math.min(2000 * Math.pow(1.5, intento), 15000) + Math.random() * 1500;
           setTimeout(procesarCola, espera);
         });
     }
 
-    // Red de seguridad: reintenta la cola al recuperar señal, al volver a la app,
-    // y cada 10s por si algo quedó pendiente.
     window.addEventListener('online', procesarCola);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') procesarCola();
-    });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') procesarCola(); });
     window.addEventListener('focus', procesarCola);
     setInterval(procesarCola, 10000);
 
-        function showSuccessModal(data) {
+    function showSuccessModal(data) {
       const modal = document.getElementById('modalOverlay');
       document.getElementById('modalContent').innerHTML = construirResumenHtml(data);
       modal.style.display = 'flex';
@@ -1072,31 +786,22 @@
     function closeModalAndClear() {
       const modal = document.getElementById('modalOverlay');
       modal.classList.remove('show');
-
       setTimeout(() => {
         modal.style.display = 'none';
-
         document.getElementById('clienta').value = '';
         document.getElementById('comisionExtra').checked = false;
         document.getElementById('searchService').value = '';
-
         selectedMetodoPago = '';
         selectedEstadoClienta = '';
-                document.querySelectorAll('#metodoPagoContainer .option-btn, #estadoClientaContainer .option-btn')
+        document.querySelectorAll('#metodoPagoContainer .option-btn, #estadoClientaContainer .option-btn')
           .forEach(btn => btn.classList.remove('active'));
         selectedServices.clear();
         updateSelectedPreview();
         renderServices();
-
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
       }, 300);
     }
 
-    // ================================================================
-    // PWA: registra el service worker para que el "cascarón" (HTML/CSS)
-    // abra instantáneo, incluso con mala señal, la próxima vez.
-    // ================================================================
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(console.error);
