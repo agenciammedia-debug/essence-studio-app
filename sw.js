@@ -1,15 +1,9 @@
 // ============================================================
 // ESSENCE STUDIO - SERVICE WORKER
-// Guarda solo el "cascarón" de la app (HTML, ícono, manifest)
-// para que abra rápido. NUNCA guarda las respuestas de Google,
-// así la lista de clientas siempre llega fresca.
-//
-// IMPORTANTE: cada vez que edites este archivo, sube el número
-// de versión (essence-v3 -> essence-v4 -> essence-v5...).
-// Si no lo cambias, el iPhone sigue usando la versión vieja.
+// Cada vez que edites index.html o este archivo, sube la versión.
 // ============================================================
 
-const CACHE = 'essence-v9';
+const CACHE = 'essence-v10';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {
@@ -26,10 +20,9 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('script.google.com')) return;
+  if (e.request.url.includes('script.google.com') || e.request.url.includes('googleusercontent.com')) return;
   if (e.request.method !== 'GET') return;
 
-  // El HTML: primero la red, el caché solo como respaldo sin señal
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
     e.respondWith(
       fetch(e.request)
