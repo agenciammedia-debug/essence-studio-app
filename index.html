@@ -161,6 +161,62 @@
       border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
       font-size: 14px; font-weight: 600; line-height: 1.4;
     }
+    /* ---------- Encabezado + botón Registros ---------- */
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .header-row h1 { margin: 0; }
+    .btn-registros {
+      background: var(--primary); color: #fff; border: none; border-radius: 20px;
+      padding: 9px 16px; font-size: 15px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 4px 10px rgba(224, 156, 169, 0.35);
+    }
+    .btn-registros:active { opacity: 0.7; }
+
+    /* ---------- Panel de Registros ---------- */
+    #registrosPanel {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg);
+      z-index: 1800; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      transform: translateX(100%); transition: transform 0.3s ease;
+    }
+    #registrosPanel.open { transform: translateX(0); }
+    .reg-top {
+      position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; background: rgba(242,242,247,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(60,60,67,0.12);
+    }
+    .reg-top button {
+      background: none; border: none; color: var(--primary); font-size: 17px;
+      font-weight: 600; cursor: pointer; padding: 4px 0;
+    }
+    .reg-top .reg-title { font-size: 17px; font-weight: 700; }
+    .reg-body { max-width: 500px; margin: 0 auto; padding: 16px 16px 40px; }
+    .reg-card {
+      background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .reg-head { display: flex; justify-content: space-between; align-items: center; }
+    .reg-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .reg-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .reg-big { font-size: 34px; font-weight: 700; color: var(--primary); }
+    .reg-item { padding: 12px 0; border-bottom: 1px solid rgba(60,60,67,0.1); }
+    .reg-item:last-child { border-bottom: none; }
+    .reg-item-top { display: flex; gap: 8px; align-items: baseline; }
+    .reg-hora { font-size: 13px; color: var(--text-muted); min-width: 40px; }
+    .reg-cli { flex: 1; font-weight: 600; font-size: 16px; }
+    .reg-monto { font-weight: 700; font-size: 15px; white-space: nowrap; }
+    .reg-serv { font-size: 14px; color: #333; margin: 4px 0 0 48px; line-height: 1.4; }
+    .reg-meta { font-size: 12px; color: var(--text-muted); margin: 4px 0 0 48px; }
+    .reg-pend { color: #ff9500; font-weight: 600; }
+    .reg-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 17px; padding-top: 12px; border-top: 1px solid rgba(60,60,67,0.2); margin-top: 4px; }
+    .reg-empty { color: var(--text-muted); font-size: 15px; padding: 12px 0; text-align: center; }
+    .up-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 15px; }
+    .up-table th { text-align: left; font-size: 12px; color: var(--text-muted); text-transform: uppercase; padding: 8px 6px; border-bottom: 1px solid rgba(60,60,67,0.2); }
+    .up-table th.num, .up-table td.num { text-align: center; width: 70px; }
+    .up-table td { padding: 10px 6px; border-bottom: 1px solid rgba(60,60,67,0.08); }
+    .up-table tr.yo td { background: rgba(224,156,169,0.15); font-weight: 700; }
+    .up-table tfoot td { font-weight: 700; border-top: 1px solid rgba(60,60,67,0.2); border-bottom: none; }
+    .reg-loading { text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: 600; }
+
     #loader {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg);
       display: flex; justify-content: center; align-items: center; z-index: 1000;
@@ -194,8 +250,20 @@
     </div>
   </div>
 
+  <div id="registrosPanel">
+    <div class="reg-top">
+      <button onclick="cerrarRegistros()">‹ Volver</button>
+      <span class="reg-title">Registros</span>
+      <button onclick="cargarRegistros()">↻</button>
+    </div>
+    <div class="reg-body" id="registrosContent"></div>
+  </div>
+
   <div class="container" style="display: none;" id="app">
-    <h1>Registro Essence</h1>
+    <div class="header-row">
+      <h1>Comandas</h1>
+      <button class="btn-registros" onclick="abrirRegistros()">Registros</button>
+    </div>
 
     <div class="form-group">
       <label>Manicurista</label>
@@ -617,7 +685,8 @@
         metodoPago: selectedMetodoPago,
         servicios: Array.from(selectedServices).join(', '),
         estadoClienta: selectedEstadoClienta,
-        comisionExtra: document.getElementById('comisionExtra').checked
+        comisionExtra: document.getElementById('comisionExtra').checked,
+        creado: Date.now()
       };
 
       mostrarRevision(formDataPendiente);
@@ -800,6 +869,111 @@
         renderServices();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 300);
+    }
+
+    // ================================================================
+    // REGISTROS: mis comandas de hoy + tabla de Up Selling (todas)
+    // ================================================================
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function soles(n) { return 'S/ ' + (Number(n) || 0).toFixed(2); }
+
+    function nombreActual() {
+      return document.getElementById('manicurista').value || localStorage.getItem('miNombreManicurista') || '';
+    }
+
+    function abrirRegistros() {
+      document.getElementById('registrosPanel').classList.add('open');
+      cargarRegistros();
+    }
+
+    function cerrarRegistros() {
+      document.getElementById('registrosPanel').classList.remove('open');
+    }
+
+    function cargarRegistros() {
+      const cont = document.getElementById('registrosContent');
+      const nombre = nombreActual();
+      cont.innerHTML = '<div class="reg-loading">Cargando registros...</div>';
+
+      fetch(SCRIPT_URL + '?action=getRegistros&manicurista=' + encodeURIComponent(nombre) + '&t=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.json())
+        .then(d => {
+          if (d.status !== 'ok') throw new Error(d.message || 'Error del servidor');
+          renderRegistros(d, nombre);
+        })
+        .catch(err => {
+          console.error('Registros:', err);
+          cont.innerHTML = '<div class="reg-card reg-empty">No se pudieron cargar los registros. Revisa tu conexión.<br><br>' +
+            '<button class="btn-registros" onclick="cargarRegistros()">Reintentar</button></div>';
+        });
+    }
+
+    function renderRegistros(d, nombre) {
+      // Comandas guardadas en este teléfono que aún no llegan a la hoja
+      const idsServidor = new Set(d.comandas.map(c => c.id).filter(Boolean));
+      const hoy = fechaLocalHoy();
+      const pendientes = getCola().filter(x =>
+        normalizar(x.manicurista) === normalizar(nombre) &&
+        !idsServidor.has(x.idempotencyId) &&
+        (!x.creado || (() => { const f = new Date(x.creado);
+          return f.getFullYear() + '-' + String(f.getMonth() + 1).padStart(2, '0') + '-' + String(f.getDate()).padStart(2, '0') === hoy; })())
+      );
+
+      const items = d.comandas.map(c => ({ ...c, pendiente: false })).concat(
+        pendientes.map(x => ({
+          hora: x.creado ? new Date(x.creado).toTimeString().slice(0, 5) : '',
+          clienta: x.clienta, servicios: x.servicios, metodo: x.metodoPago, sede: x.sede,
+          up: !!x.comisionExtra, total: (String(x.servicios).match(/-\s*\d+(?:\.\d+)?\s*soles/gi) || [])
+            .reduce((s, t) => s + parseFloat(t.replace(/[^\d.]/g, '')), 0),
+          pendiente: true
+        }))
+      );
+      const total = items.reduce((s, c) => s + (Number(c.total) || 0), 0);
+
+      let html = '<div class="reg-card"><div class="reg-head"><div>' +
+        '<div class="reg-label">Mis comandas de hoy</div>' +
+        '<div class="reg-sub">' + esc(nombre || 'Sin nombre') + ' · ' + esc(d.hoy) + '</div></div>' +
+        '<div class="reg-big">' + items.length + '</div></div>';
+
+      if (!nombre) {
+        html += '<div class="reg-empty">Selecciona tu nombre en la pantalla de Comandas.</div>';
+      } else if (items.length === 0) {
+        html += '<div class="reg-empty">Aún no tienes comandas hoy.</div>';
+      } else {
+        items.forEach(c => {
+          html += '<div class="reg-item"><div class="reg-item-top">' +
+            '<span class="reg-hora">' + esc(c.hora) + '</span>' +
+            '<span class="reg-cli">' + esc(c.clienta) + '</span>' +
+            '<span class="reg-monto">' + soles(c.total) + '</span></div>' +
+            '<div class="reg-serv">' + esc(c.servicios) + '</div>' +
+            '<div class="reg-meta">' + esc(c.metodo) + (c.sede ? ' · ' + esc(c.sede) : '') +
+            (c.up ? ' · <b>UP SELLING 🤑</b>' : '') +
+            (c.pendiente ? ' · <span class="reg-pend">⏳ Sincronizando</span>' : '') + '</div></div>';
+        });
+        html += '<div class="reg-total"><span>Total del día</span><span>' + soles(total) + '</span></div>';
+      }
+      html += '</div>';
+
+      // Tabla de Up Selling (visible para todas)
+      const filas = d.upselling.slice().sort((a, b) => b.semana - a.semana || b.mes - a.mes || a.nombre.localeCompare(b.nombre));
+      const yo = normalizar(nombre);
+      let totSem = 0, totMes = 0;
+
+      html += '<div class="reg-card"><div class="reg-label">Up Selling 🤑💕</div>' +
+        '<div class="reg-sub">Semana: dom ' + esc(d.semana.desde) + ' – sáb ' + esc(d.semana.hasta) + ' · Mes: ' + esc(d.mes) + '</div>' +
+        '<table class="up-table"><thead><tr><th>Manicurista</th><th class="num">Semana</th><th class="num">Mes</th></tr></thead><tbody>';
+      filas.forEach(f => {
+        totSem += f.semana; totMes += f.mes;
+        html += '<tr' + (normalizar(f.nombre) === yo ? ' class="yo"' : '') + '><td>' + esc(f.nombre) + '</td>' +
+          '<td class="num">' + f.semana + '</td><td class="num">' + f.mes + '</td></tr>';
+      });
+      html += '</tbody><tfoot><tr><td>Total</td><td class="num">' + totSem + '</td><td class="num">' + totMes + '</td></tr></tfoot></table></div>';
+
+      document.getElementById('registrosContent').innerHTML = html;
     }
 
     if ('serviceWorker' in navigator) {
