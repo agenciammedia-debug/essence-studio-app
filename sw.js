@@ -3,7 +3,7 @@
 // Cada vez que edites index.html o este archivo, sube la versión.
 // ============================================================
 
-const CACHE = 'essence-v10';
+const CACHE = 'essence-v11';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {
